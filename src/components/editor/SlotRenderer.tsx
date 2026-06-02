@@ -182,26 +182,28 @@ export function SlotRenderer({ slot, content, designSystem, gradients, isSelecte
 
     case 'image': {
       const url = content?.type === 'image' ? content.storageUrl : ''
+      const fit = content?.type === 'image' ? (content.objectFit ?? 'cover') : 'cover'
       return (
-        <div style={style} onClick={handleClick}>
+        <div style={{ ...style, background: 'transparent' }} onClick={handleClick}>
           {url ? (
             <img
               src={url}
               alt={content?.type === 'image' ? content.altText ?? '' : ''}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              style={{ width: '100%', height: '100%', objectFit: fit, display: 'block' }}
             />
           ) : (
             <div
               style={{
                 width: '100%',
                 height: '100%',
-                background: 'rgba(0,0,0,0.1)',
+                background: 'rgba(0,0,0,0.06)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                border: '1px dashed rgba(0,0,0,0.15)',
               }}
             >
-              <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>Klicka för att ladda upp bild</span>
+              <span style={{ color: 'rgba(0,0,0,0.3)', fontSize: 11 }}>Klicka för att ladda upp bild</span>
             </div>
           )}
         </div>

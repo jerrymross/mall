@@ -207,16 +207,38 @@ function SlotForm({
     }
 
     case 'image': {
-      const url = (content as { storageUrl?: string })?.storageUrl ?? ''
+      const imgContent = content?.type === 'image' ? content : null
+      const url = imgContent?.storageUrl ?? ''
+      const fit = imgContent?.objectFit ?? 'cover'
       return (
-        <ImageUploader
-          value={url}
-          bucket="assets"
-          folder="images"
-          label="Bild"
-          hint="PNG, JPG eller WebP. Dras och släpps eller klickas."
-          onUploaded={(publicUrl) => onUpdate({ storageUrl: publicUrl })}
-        />
+        <div className="flex flex-col gap-3">
+          <ImageUploader
+            value={url}
+            bucket="assets"
+            folder="images"
+            label="Bild"
+            hint="PNG, JPG, WebP eller SVG med transparens."
+            onUploaded={(publicUrl) => onUpdate({ storageUrl: publicUrl })}
+          />
+          <div className="flex flex-col gap-1">
+            <p className="text-xs font-medium text-slate-700">Bildplacering</p>
+            <div className="flex rounded-lg border border-slate-200 overflow-hidden text-xs">
+              {(['cover', 'contain'] as const).map((option) => (
+                <button
+                  key={option}
+                  onClick={() => onUpdate({ objectFit: option })}
+                  className={`flex-1 py-1.5 font-medium transition-colors
+                    ${fit === option ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
+                >
+                  {option === 'cover' ? 'Fyll (cover)' : 'Passa in (contain)'}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-slate-400">
+              {fit === 'contain' ? 'Hela bilden visas — transparens bevaras.' : 'Bilden fyller ytan och beskärs.'}
+            </p>
+          </div>
+        </div>
       )
     }
 

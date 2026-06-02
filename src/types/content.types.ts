@@ -37,6 +37,7 @@ export interface ImageContent {
   type: 'image'
   storageUrl: string
   altText?: string
+  objectFit?: 'cover' | 'contain'
   focalPoint?: { x: number; y: number }
 }
 
