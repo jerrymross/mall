@@ -1,10 +1,8 @@
-import { pdf } from '@react-pdf/renderer'
 import { createElement } from 'react'
 import type { TemplateDefinition } from '../types/template.types'
 import type { ContentMap } from '../types/content.types'
 import type { DesignSystem } from '../types/designSystem.types'
 import type { GradientDefinition } from '../types/gradient.types'
-import { PDFDocument } from './PDFDocument'
 
 export async function exportToPDF(
   template: TemplateDefinition,
@@ -13,15 +11,13 @@ export async function exportToPDF(
   gradients: GradientDefinition[],
   title: string,
 ): Promise<Blob> {
-  const element = createElement(PDFDocument, {
-    template,
-    contentMap,
-    designSystem,
-    gradients,
-    title,
-  })
-  const instance = pdf(element)
-  const blob = await instance.toBlob()
+  // Lazy-load the heavy PDF renderer only when actually exporting
+  const [{ pdf }, { PDFDocument }] = await Promise.all([
+    import('@react-pdf/renderer'),
+    import('./PDFDocument'),
+  ])
+  const element = createElement(PDFDocument, { template, contentMap, designSystem, gradients, title })
+  const blob = await pdf(element).toBlob()
   return blob
 }
 
