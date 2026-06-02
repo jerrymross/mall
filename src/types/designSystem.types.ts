@@ -2,6 +2,7 @@ export type ColorTokenKey =
   | 'brand-primary'
   | 'brand-secondary'
   | 'brand-accent'
+  | 'brand-coral'
   | 'neutral-100'
   | 'neutral-200'
   | 'neutral-300'

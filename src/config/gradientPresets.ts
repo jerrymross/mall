@@ -46,6 +46,28 @@ export const GRADIENT_PRESETS: GradientDefinition[] = [
     ],
   },
   {
+    id: 'grad-navy-solid',
+    name: 'Marinblå Solid',
+    type: 'linear',
+    angle: 90,
+    isPreset: true,
+    stops: [
+      { colorTokenKey: 'brand-secondary', position: 0, opacity: 1 },
+      { colorTokenKey: 'brand-secondary', position: 100, opacity: 1 },
+    ],
+  },
+  {
+    id: 'grad-white-solid',
+    name: 'Vit Solid',
+    type: 'linear',
+    angle: 90,
+    isPreset: true,
+    stops: [
+      { colorTokenKey: 'neutral-100', position: 0, opacity: 1 },
+      { colorTokenKey: 'neutral-100', position: 100, opacity: 1 },
+    ],
+  },
+  {
     id: 'grad-light-subtle',
     name: 'Ljus Subtil',
     type: 'linear',
