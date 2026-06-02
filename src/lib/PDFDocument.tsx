@@ -5,7 +5,6 @@ import {
   Text,
   Image as PDFImage,
   StyleSheet,
-  Font,
 } from '@react-pdf/renderer'
 import type { TemplateDefinition, TemplateSlot } from '../types/template.types'
 import type { ContentMap, SlotContent } from '../types/content.types'
@@ -13,22 +12,14 @@ import type { DesignSystem } from '../types/designSystem.types'
 import type { GradientDefinition } from '../types/gradient.types'
 import { resolveColor, resolveTypography } from './tokenResolver'
 
-// Register fonts – fall back to built-ins if network unavailable
-Font.register({
-  family: 'Inter',
-  fonts: [
-    { src: 'https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff', fontWeight: 400 },
-    { src: 'https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuI6fAZ9hiJ-Ek-_EeA.woff', fontWeight: 700 },
-  ],
-})
-
-Font.register({
-  family: 'Lora',
-  fonts: [
-    { src: 'https://fonts.gstatic.com/s/lora/v35/0QI6MX1D_JOxE7fSyjkpAqbGPT8.woff', fontWeight: 400 },
-    { src: 'https://fonts.gstatic.com/s/lora/v35/0QI6MX1D_JOxE7fSyjkpAqfGPT8.woff', fontWeight: 700 },
-  ],
-})
+// Map web font families to built-in PDF fonts
+// Inter → Helvetica, Lora → Times-Roman (serif equivalent)
+function pdfFont(family: string, weight: number): string {
+  const isSerif = family === 'Lora'
+  const isBold = weight >= 600
+  if (isSerif) return isBold ? 'Times-Bold' : 'Times-Roman'
+  return isBold ? 'Helvetica-Bold' : 'Helvetica'
+}
 
 const MM_TO_PT = 2.8346
 
@@ -105,14 +96,9 @@ function PDFSlot({
     ? resolveTypography(designSystem, slot.constraints.typographyTokenKey)
     : undefined
 
-  const safeFamily =
-    typToken?.fontFamily === 'Lora' ? 'Lora' :
-    typToken?.fontFamily === 'Inter' ? 'Inter' :
-    'Helvetica'
-
   const textStyle = typToken
     ? {
-        fontFamily: safeFamily,
+        fontFamily: pdfFont(typToken.fontFamily, typToken.fontWeight),
         fontSize: typToken.sizeRem * 14,
         color: resolveColor(designSystem, typToken.colorTokenKey),
         lineHeight: typToken.lineHeight,
@@ -193,7 +179,7 @@ function PDFSlot({
     case 'contact':
       return (
         <View style={base}>
-          {content.name && <Text style={[textStyle, { fontFamily: 'Helvetica-Bold' }]}>{content.name}</Text>}
+          {content.name && <Text style={[textStyle, { fontFamily: pdfFont(typToken?.fontFamily ?? 'Inter', 700) }]}>{content.name}</Text>}
           {content.title && <Text style={textStyle}>{content.title}</Text>}
           {content.email && <Text style={textStyle}>{content.email}</Text>}
           {content.phone && <Text style={textStyle}>{content.phone}</Text>}
