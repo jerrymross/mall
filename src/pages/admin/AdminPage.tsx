@@ -4,6 +4,7 @@ import { useDesignSystemStore } from '../../store/useDesignSystemStore'
 import { GRADIENT_PRESETS } from '../../config/gradientPresets'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
+import { ImageUploader } from '../../components/ui/ImageUploader'
 import { ChevronLeft, Palette, Type, Layers, Image } from 'lucide-react'
 import type { DesignSystem, ColorToken, ColorTokenKey } from '../../types/designSystem.types'
 import type { GradientDefinition } from '../../types/gradient.types'
@@ -191,22 +192,23 @@ function LogoEditor({ ds, onUpdate }: { ds: DesignSystem; onUpdate: (url: string
   return (
     <div>
       <h2 className="text-lg font-semibold text-slate-800 mb-4">Logotyp</h2>
-      <div className="bg-white rounded-xl p-6 border border-slate-200">
-        <div className="h-32 bg-slate-100 rounded-lg flex items-center justify-center mb-4 border-2 border-dashed border-slate-300">
-          {ds.logoAssetUrl ? (
-            <img src={ds.logoAssetUrl} alt="Logotyp" className="max-h-full max-w-full object-contain p-4" />
-          ) : (
-            <span className="text-slate-400 text-sm">Ingen logotyp uppladdad</span>
-          )}
-        </div>
+      <div className="bg-white rounded-xl p-6 border border-slate-200 flex flex-col gap-4">
+        <ImageUploader
+          value={ds.logoAssetUrl}
+          bucket="assets"
+          folder="logos"
+          accept="image/png,image/svg+xml,image/jpeg,image/webp"
+          label="Ladda upp logotyp"
+          hint="PNG eller SVG rekommenderas. Visas på alla mallar."
+          onUploaded={onUpdate}
+        />
         <Input
-          label="Logotyp URL"
+          label="Eller klistra in URL"
           value={ds.logoAssetUrl}
           onChange={(e) => onUpdate(e.target.value)}
           placeholder="https://..."
-          hint="Klistra in URL till logotypen (PNG/SVG rekommenderas)"
         />
-        <div className="mt-4 grid grid-cols-2 gap-3 text-xs text-slate-600">
+        <div className="grid grid-cols-2 gap-3 text-xs text-slate-600">
           <div className="bg-slate-50 rounded-lg p-3">
             <p className="font-medium mb-1">Minsta bredd</p>
             <p>{ds.logoRules.minWidthPx}px</p>

@@ -6,6 +6,7 @@ import { Input } from '../../ui/Input'
 import { Textarea } from '../../ui/Textarea'
 import { Select } from '../../ui/Select'
 import { Button } from '../../ui/Button'
+import { ImageUploader } from '../../ui/ImageUploader'
 import { useAIGenerate } from '../../../hooks/useAIGenerate'
 import { Sparkles } from 'lucide-react'
 import type { SlotContent } from '../../../types/content.types'
@@ -208,16 +209,14 @@ function SlotForm({
     case 'image': {
       const url = (content as { storageUrl?: string })?.storageUrl ?? ''
       return (
-        <div className="flex flex-col gap-2">
-          <Input
-            label="Bild-URL"
-            value={url}
-            onChange={(e) => onUpdate({ storageUrl: e.target.value })}
-            placeholder="https://..."
-            type="url"
-          />
-          <p className="text-xs text-slate-400">Klistra in URL till bilden, eller ladda upp via Supabase Storage.</p>
-        </div>
+        <ImageUploader
+          value={url}
+          bucket="assets"
+          folder="images"
+          label="Bild"
+          hint="PNG, JPG eller WebP. Dras och släpps eller klickas."
+          onUploaded={(publicUrl) => onUpdate({ storageUrl: publicUrl })}
+        />
       )
     }
 
