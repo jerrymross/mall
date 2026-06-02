@@ -5,12 +5,30 @@ import {
   Text,
   Image as PDFImage,
   StyleSheet,
+  Font,
 } from '@react-pdf/renderer'
 import type { TemplateDefinition, TemplateSlot } from '../types/template.types'
 import type { ContentMap, SlotContent } from '../types/content.types'
 import type { DesignSystem } from '../types/designSystem.types'
 import type { GradientDefinition } from '../types/gradient.types'
 import { resolveColor, resolveTypography } from './tokenResolver'
+
+// Register fonts – fall back to built-ins if network unavailable
+Font.register({
+  family: 'Inter',
+  fonts: [
+    { src: 'https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff', fontWeight: 400 },
+    { src: 'https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuI6fAZ9hiJ-Ek-_EeA.woff', fontWeight: 700 },
+  ],
+})
+
+Font.register({
+  family: 'Lora',
+  fonts: [
+    { src: 'https://fonts.gstatic.com/s/lora/v35/0QI6MX1D_JOxE7fSyjkpAqbGPT8.woff', fontWeight: 400 },
+    { src: 'https://fonts.gstatic.com/s/lora/v35/0QI6MX1D_JOxE7fSyjkpAqfGPT8.woff', fontWeight: 700 },
+  ],
+})
 
 const MM_TO_PT = 2.8346
 
@@ -30,7 +48,6 @@ export function PDFDocument({ template, contentMap, designSystem, gradients }: P
         const bgGradient = page.backgroundGradientId
           ? gradients.find((g) => g.id === page.backgroundGradientId)
           : undefined
-
         const bgColor = bgGradient
           ? resolveColor(designSystem, bgGradient.stops[0].colorTokenKey)
           : page.backgroundColorTokenKey
@@ -75,7 +92,7 @@ function PDFSlot({
   gradients: GradientDefinition[]
 }) {
   const pos = slot.position
-  const style = {
+  const base = {
     position: 'absolute' as const,
     left: pos.x * MM_TO_PT,
     top: pos.y * MM_TO_PT,
@@ -84,131 +101,124 @@ function PDFSlot({
     overflow: 'hidden' as const,
   }
 
-  if (!content) {
-    return <View style={style} />
-  }
-
   const typToken = slot.constraints.typographyTokenKey
     ? resolveTypography(designSystem, slot.constraints.typographyTokenKey)
     : undefined
 
+  const safeFamily =
+    typToken?.fontFamily === 'Lora' ? 'Lora' :
+    typToken?.fontFamily === 'Inter' ? 'Inter' :
+    'Helvetica'
+
   const textStyle = typToken
     ? {
-        fontFamily: typToken.fontFamily,
+        fontFamily: safeFamily,
         fontSize: typToken.sizeRem * 14,
         color: resolveColor(designSystem, typToken.colorTokenKey),
         lineHeight: typToken.lineHeight,
       }
-    : {}
+    : { fontFamily: 'Helvetica', fontSize: 10, color: '#000000', lineHeight: 1.4 }
+
+  // Locked gradient-backgrounds use constraints.gradientId directly
+  if (slot.type === 'gradient-background') {
+    const gradientId = slot.locked
+      ? slot.constraints.gradientId
+      : content?.type === 'gradient-background'
+        ? content.gradientId
+        : undefined
+    const grad = gradientId ? gradients.find((g) => g.id === gradientId) : undefined
+    const bgColor = grad
+      ? resolveColor(designSystem, grad.stops[0].colorTokenKey)
+      : '#EEEEEE'
+    return <View style={[base, { backgroundColor: bgColor }]} />
+  }
+
+  // Logo
+  if (slot.type === 'logo') {
+    const variant = slot.constraints.logoVariant ?? 'full-color'
+    const logoUrl =
+      designSystem.logoAssets[variant] ??
+      designSystem.logoAssets['full-color'] ??
+      Object.values(designSystem.logoAssets)[0] ??
+      ''
+    if (!logoUrl) return <View style={base} />
+    return (
+      <View style={base}>
+        <PDFImage src={logoUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+      </View>
+    )
+  }
+
+  if (!content) return <View style={base} />
 
   switch (content.type) {
     case 'heading':
     case 'subheading':
       return (
-        <View style={style}>
-          <Text style={[styles.text, textStyle]}>{content.text}</Text>
+        <View style={base}>
+          <Text style={textStyle}>{content.text}</Text>
         </View>
       )
+
     case 'body-text':
       return (
-        <View style={style}>
-          <Text style={[styles.text, textStyle, styles.bodyText]}>{content.text}</Text>
+        <View style={base}>
+          <Text style={[textStyle, { flexWrap: 'wrap' }]}>{content.text}</Text>
         </View>
       )
+
     case 'bullet-list':
       return (
-        <View style={style}>
+        <View style={base}>
           {content.items.map((item, i) => (
-            <View key={i} style={styles.bulletRow}>
-              <Text style={[styles.bullet, textStyle]}>•</Text>
-              <Text style={[styles.text, textStyle, styles.bulletText]}>{item}</Text>
+            <View key={i} style={{ flexDirection: 'row', marginBottom: 2 }}>
+              <Text style={[textStyle, { marginRight: 4 }]}>•</Text>
+              <Text style={[textStyle, { flex: 1 }]}>{item}</Text>
             </View>
           ))}
         </View>
       )
+
     case 'cta': {
       const ctaColor = slot.constraints.colorTokenKey
         ? resolveColor(designSystem, slot.constraints.colorTokenKey)
         : '#0057A8'
       return (
-        <View style={[style, styles.ctaView, { backgroundColor: ctaColor }]}>
-          <Text style={[styles.text, textStyle, styles.ctaText]}>{content.label}</Text>
+        <View style={[base, { backgroundColor: ctaColor, justifyContent: 'center', alignItems: 'center', borderRadius: 4 }]}>
+          <Text style={[textStyle, { color: '#FFFFFF' }]}>{content.label}</Text>
         </View>
       )
     }
+
     case 'contact':
       return (
-        <View style={style}>
-          {content.name && <Text style={[styles.text, textStyle, styles.bold]}>{content.name}</Text>}
-          {content.title && <Text style={[styles.text, textStyle]}>{content.title}</Text>}
-          {content.email && <Text style={[styles.text, textStyle]}>{content.email}</Text>}
-          {content.phone && <Text style={[styles.text, textStyle]}>{content.phone}</Text>}
+        <View style={base}>
+          {content.name && <Text style={[textStyle, { fontFamily: 'Helvetica-Bold' }]}>{content.name}</Text>}
+          {content.title && <Text style={textStyle}>{content.title}</Text>}
+          {content.email && <Text style={textStyle}>{content.email}</Text>}
+          {content.phone && <Text style={textStyle}>{content.phone}</Text>}
         </View>
       )
+
     case 'image':
       return content.storageUrl ? (
-        <View style={style}>
-          <PDFImage src={content.storageUrl} style={styles.image} />
+        <View style={base}>
+          <PDFImage
+            src={content.storageUrl}
+            style={{ width: '100%', height: '100%', objectFit: content.objectFit === 'contain' ? 'contain' : 'cover' }}
+          />
         </View>
       ) : (
-        <View style={[style, styles.imagePlaceholder]} />
+        <View style={[base, { backgroundColor: '#D1DCE8' }]} />
       )
-    case 'gradient-background': {
-      const grad = gradients.find((g) => g.id === content.gradientId)
-      const bgColor = grad
-        ? resolveColor(designSystem, grad.stops[0].colorTokenKey)
-        : '#0057A8'
-      return <View style={[style, { backgroundColor: bgColor }]} />
-    }
-    case 'logo':
-      return <View style={style} />
+
     default:
-      return <View style={style} />
+      return <View style={base} />
   }
 }
 
 const styles = StyleSheet.create({
   page: {
     position: 'relative',
-  },
-  text: {
-    fontFamily: 'Helvetica',
-  },
-  bodyText: {
-    flexWrap: 'wrap',
-  },
-  bulletRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 2,
-  },
-  bullet: {
-    marginRight: 4,
-    fontSize: 8,
-  },
-  bulletText: {
-    flex: 1,
-  },
-  bold: {
-    fontFamily: 'Helvetica-Bold',
-  },
-  ctaView: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  ctaText: {
-    color: '#FFFFFF',
-    textTransform: 'uppercase',
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-  },
-  imagePlaceholder: {
-    backgroundColor: '#D1DCE8',
   },
 })

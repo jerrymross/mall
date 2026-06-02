@@ -24,7 +24,9 @@ export function usePDFExport() {
         const filename = `${title.replace(/\s+/g, '-').toLowerCase()}.pdf`
         downloadBlob(blob, filename)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Export misslyckades')
+        const msg = err instanceof Error ? err.message : String(err)
+        console.error('PDF export failed:', err)
+        setError(msg)
       } finally {
         setIsExporting(false)
       }
