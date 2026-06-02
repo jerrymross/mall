@@ -27,6 +27,13 @@ export function ImageUploader({
 
   async function handleFile(file: File) {
     setError(null)
+
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? ''
+    if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
+      setError('Supabase är inte konfigurerat. Lägg till VITE_SUPABASE_URL i miljövariabler.')
+      return
+    }
+
     setUploading(true)
     try {
       const ext = file.name.split('.').pop()
@@ -39,7 +46,9 @@ export function ImageUploader({
       const { data } = supabase.storage.from(bucket).getPublicUrl(path)
       onUploaded(data.publicUrl)
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Uppladdning misslyckades')
+      const msg = e instanceof Error ? e.message : JSON.stringify(e)
+      console.error('Upload error:', e)
+      setError(msg)
     } finally {
       setUploading(false)
     }
