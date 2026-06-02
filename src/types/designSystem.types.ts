@@ -43,6 +43,8 @@ export interface LogoRule {
   allowedPlacements: ('top-left' | 'top-right' | 'bottom-left' | 'bottom-right')[]
 }
 
+export type LogoVariant = 'full-color' | 'white' | 'black'
+
 export interface DesignSystem {
   id: string
   name: string
@@ -51,7 +53,7 @@ export interface DesignSystem {
   typography: TypographyToken[]
   spacing: SpacingToken[]
   logoRules: LogoRule
-  logoAssetUrl: string
+  logoAssets: Partial<Record<LogoVariant, string>>
   isActive: boolean
   createdAt: string
   updatedAt: string

@@ -65,7 +65,12 @@ export function SlotRenderer({ slot, content, designSystem, gradients, isSelecte
     }
 
     case 'logo': {
-      const logoUrl = designSystem.logoAssetUrl
+      const variant = slot.constraints.logoVariant ?? 'full-color'
+      const logoUrl =
+        designSystem.logoAssets[variant] ??
+        designSystem.logoAssets['full-color'] ??
+        Object.values(designSystem.logoAssets)[0] ??
+        ''
       return (
         <div style={style}>
           {logoUrl ? (

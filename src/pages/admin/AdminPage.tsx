@@ -79,7 +79,14 @@ export function AdminPage() {
         {tab === 'colors' && <ColorEditor ds={ds} onUpdateColor={updateColor} />}
         {tab === 'typography' && <TypographyViewer ds={ds} />}
         {tab === 'gradients' && <GradientViewer gradients={GRADIENT_PRESETS} ds={ds} />}
-        {tab === 'logo' && <LogoEditor ds={ds} onUpdate={(url) => setDs((p) => ({ ...p, logoAssetUrl: url }))} />}
+        {tab === 'logo' && (
+          <LogoEditor
+            ds={ds}
+            onUpdate={(variant, url) =>
+              setDs((p) => ({ ...p, logoAssets: { ...p.logoAssets, [variant]: url } }))
+            }
+          />
+        )}
       </main>
     </div>
   )
@@ -188,32 +195,56 @@ function GradientViewer({ gradients, ds }: { gradients: GradientDefinition[]; ds
   )
 }
 
-function LogoEditor({ ds, onUpdate }: { ds: DesignSystem; onUpdate: (url: string) => void }) {
+const LOGO_VARIANTS: { key: 'full-color' | 'white' | 'black'; label: string; bg: string }[] = [
+  { key: 'full-color', label: 'Färg', bg: 'bg-white' },
+  { key: 'white', label: 'Vit (på mörk bakgrund)', bg: 'bg-slate-800' },
+  { key: 'black', label: 'Svart (på ljus bakgrund)', bg: 'bg-slate-100' },
+]
+
+function LogoEditor({
+  ds,
+  onUpdate,
+}: {
+  ds: DesignSystem
+  onUpdate: (variant: 'full-color' | 'white' | 'black', url: string) => void
+}) {
   return (
     <div>
-      <h2 className="text-lg font-semibold text-slate-800 mb-4">Logotyp</h2>
-      <div className="bg-white rounded-xl p-6 border border-slate-200 flex flex-col gap-4">
-        <ImageUploader
-          value={ds.logoAssetUrl}
-          bucket="assets"
-          folder="logos"
-          accept="image/png,image/svg+xml,image/jpeg,image/webp"
-          label="Ladda upp logotyp"
-          hint="PNG eller SVG rekommenderas. Visas på alla mallar."
-          onUploaded={onUpdate}
-        />
-        <Input
-          label="Eller klistra in URL"
-          value={ds.logoAssetUrl}
-          onChange={(e) => onUpdate(e.target.value)}
-          placeholder="https://..."
-        />
+      <h2 className="text-lg font-semibold text-slate-800 mb-4">Logotypvarianter</h2>
+      <div className="flex flex-col gap-6">
+        {LOGO_VARIANTS.map(({ key, label, bg }) => (
+          <div key={key} className="bg-white rounded-xl p-6 border border-slate-200 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-slate-800">{label}</h3>
+              <span className="text-xs font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-500">{key}</span>
+            </div>
+            {ds.logoAssets[key] && (
+              <div className={`rounded-lg p-4 flex items-center justify-center h-24 ${bg}`}>
+                <img src={ds.logoAssets[key]} alt={label} className="max-h-full max-w-full object-contain" />
+              </div>
+            )}
+            <ImageUploader
+              value={ds.logoAssets[key] ?? ''}
+              bucket="assets"
+              folder="logos"
+              accept="image/png,image/svg+xml,image/jpeg,image/webp"
+              hint="PNG eller SVG rekommenderas."
+              onUploaded={(url) => onUpdate(key, url)}
+            />
+            <Input
+              label="Eller klistra in URL"
+              value={ds.logoAssets[key] ?? ''}
+              onChange={(e) => onUpdate(key, e.target.value)}
+              placeholder="https://..."
+            />
+          </div>
+        ))}
         <div className="grid grid-cols-2 gap-3 text-xs text-slate-600">
-          <div className="bg-slate-50 rounded-lg p-3">
+          <div className="bg-white rounded-lg p-3 border border-slate-200">
             <p className="font-medium mb-1">Minsta bredd</p>
             <p>{ds.logoRules.minWidthPx}px</p>
           </div>
-          <div className="bg-slate-50 rounded-lg p-3">
+          <div className="bg-white rounded-lg p-3 border border-slate-200">
             <p className="font-medium mb-1">Frizon</p>
             <p>{ds.logoRules.clearspaceMultiplier * 100}% av logohöjd</p>
           </div>

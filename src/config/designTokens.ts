@@ -5,7 +5,7 @@ export const DEFAULT_DESIGN_SYSTEM: DesignSystem = {
   name: 'Astar Utbildning',
   version: '2.0',
   isActive: true,
-  logoAssetUrl: '',
+  logoAssets: {},
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
   colors: [
