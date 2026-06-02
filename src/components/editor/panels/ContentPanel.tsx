@@ -46,7 +46,7 @@ function isSlotFilled(slot: TemplateSlot, contentMap: ContentMap): boolean {
 }
 
 export function ContentPanel({ slots, contentMap, selectedSlotId, onSelectSlot }: Props) {
-  const editableSlots = slots.filter((s) => s.type !== 'logo' && s.type !== 'gradient-background')
+  const editableSlots = slots.filter((s) => !s.locked && s.type !== 'logo' && s.type !== 'gradient-background')
   const filled = editableSlots.filter((s) => isSlotFilled(s, contentMap)).length
   const required = editableSlots.filter((s) => s.constraints.required)
   const missingRequired = required.filter((s) => !isSlotFilled(s, contentMap)).length
@@ -73,7 +73,7 @@ export function ContentPanel({ slots, contentMap, selectedSlotId, onSelectSlot }
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {slots.filter((s) => s.type !== 'logo' && s.type !== 'gradient-background').map((slot) => {
+        {slots.filter((s) => !s.locked && s.type !== 'logo' && s.type !== 'gradient-background').map((slot) => {
           const filled = isSlotFilled(slot, contentMap)
           const isSelected = selectedSlotId === slot.id
           return (

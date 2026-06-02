@@ -118,6 +118,23 @@ export const DEFAULT_DESIGN_SYSTEM: DesignSystem = {
       colorTokenKey: 'neutral-100',
       textTransform: 'uppercase',
     },
+    {
+      key: 'heading-lora-hero',
+      fontFamily: 'Lora',
+      fontWeight: 700,
+      sizeRem: 2.5,
+      lineHeight: 1.1,
+      letterSpacing: '-0.01em',
+      colorTokenKey: 'neutral-100',
+    },
+    {
+      key: 'heading-lora-lg',
+      fontFamily: 'Lora',
+      fontWeight: 600,
+      sizeRem: 1.5,
+      lineHeight: 1.2,
+      colorTokenKey: 'neutral-100',
+    },
   ],
   spacing: [
     { key: 'space-xs', valueRem: 0.25 },

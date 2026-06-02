@@ -40,6 +40,7 @@ export interface TemplateSlot {
   aiPromptHint?: string
   zIndex: number
   visible: boolean
+  locked?: boolean
 }
 
 export interface TemplatePage {

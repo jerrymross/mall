@@ -24,8 +24,8 @@ export function SlotRenderer({ slot, content, designSystem, gradients, isSelecte
     width: pos.width * mmToPx,
     height: pos.height * mmToPx,
     zIndex: slot.zIndex,
-    cursor: slot.type === 'gradient-background' || slot.type === 'logo' ? 'default' : 'pointer',
-    outline: isSelected ? '2px solid #3b82f6' : '2px solid transparent',
+    cursor: slot.locked || slot.type === 'gradient-background' || slot.type === 'logo' ? 'default' : 'pointer',
+    outline: isSelected && !slot.locked ? '2px solid #3b82f6' : '2px solid transparent',
     outlineOffset: '-2px',
     transition: 'outline-color 0.15s',
     overflow: 'hidden',
@@ -38,7 +38,7 @@ export function SlotRenderer({ slot, content, designSystem, gradients, isSelecte
   const textStyle = typToken ? typographyToCSS(typToken, designSystem) : {}
 
   const handleClick = (e: React.MouseEvent) => {
-    if (slot.type !== 'gradient-background') {
+    if (!slot.locked && slot.type !== 'gradient-background') {
       e.stopPropagation()
       onClick()
     }
@@ -52,11 +52,14 @@ export function SlotRenderer({ slot, content, designSystem, gradients, isSelecte
 
   switch (slot.type) {
     case 'gradient-background': {
-      if (content?.type === 'gradient-background') {
-        const grad = gradients.find((g) => g.id === content.gradientId)
-        if (grad) {
-          return <div style={{ ...style, background: buildGradientCSS(grad, designSystem), cursor: 'default' }} />
-        }
+      const gradientId = slot.locked
+        ? slot.constraints.gradientId
+        : content?.type === 'gradient-background'
+          ? content.gradientId
+          : undefined
+      const grad = gradientId ? gradients.find((g) => g.id === gradientId) : undefined
+      if (grad) {
+        return <div style={{ ...style, background: buildGradientCSS(grad, designSystem), cursor: 'default' }} />
       }
       return <div style={{ ...style, background: '#eee', cursor: 'default' }} />
     }
