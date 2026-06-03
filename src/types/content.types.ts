@@ -33,14 +33,25 @@ export interface ContactContent {
   photoUrl?: string
 }
 
+export interface OverlayStop {
+  colorTokenKey: string
+  opacity: number      // 0–1
+  position: number     // 0–100 (%)
+}
+
+export interface ImageOverlay {
+  type: 'linear' | 'radial'
+  angle: number        // grader (linear), ignoreras för radial
+  stops: OverlayStop[]
+  blendMode?: 'normal' | 'multiply' | 'screen' | 'overlay' | 'soft-light' | 'color-burn'
+}
+
 export interface ImageContent {
   type: 'image'
   storageUrl: string
   altText?: string
   objectFit?: 'cover' | 'contain'
-  overlayColorTokenKey?: string
-  overlayOpacity?: number
-  overlayAngle?: number
+  overlay?: ImageOverlay
   focalPoint?: { x: number; y: number }
 }
 

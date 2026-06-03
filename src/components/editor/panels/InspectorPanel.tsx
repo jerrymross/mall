@@ -212,13 +212,26 @@ function SlotForm({
       const imgContent = content?.type === 'image' ? content : null
       const url = imgContent?.storageUrl ?? ''
       const fit = imgContent?.objectFit ?? 'cover'
-      const overlayKey = imgContent?.overlayColorTokenKey ?? ''
-      const overlayOpacity = imgContent?.overlayOpacity ?? 0.5
-      const overlayAngle = imgContent?.overlayAngle ?? 180
-      const colorOptions = [
-        { value: '', label: '— ingen overlay —' },
-        ...designSystem.colors.map((c) => ({ value: c.key, label: `${c.label} (${c.hex})` })),
-      ]
+      const overlay = imgContent?.overlay
+      const stops = overlay?.stops ?? []
+      const colorOptions = designSystem.colors.map((c) => ({ value: c.key, label: c.label }))
+
+      function updateOverlay(patch: Partial<import('../../../types/content.types').ImageOverlay>) {
+        const base = overlay ?? { type: 'linear' as const, angle: 180, stops: [] }
+        onUpdate({ overlay: { ...base, ...patch } })
+      }
+      function updateStop(i: number, patch: Partial<import('../../../types/content.types').OverlayStop>) {
+        const next = stops.map((s, idx) => idx === i ? { ...s, ...patch } : s)
+        updateOverlay({ stops: next })
+      }
+      function addStop() {
+        const pos = stops.length === 0 ? 0 : stops.length === 1 ? 100 : 50
+        updateOverlay({ stops: [...stops, { colorTokenKey: designSystem.colors[0].key, opacity: 1, position: pos }] })
+      }
+      function removeStop(i: number) {
+        updateOverlay({ stops: stops.filter((_, idx) => idx !== i) })
+      }
+
       return (
         <div className="flex flex-col gap-4">
           <ImageUploader
@@ -226,63 +239,115 @@ function SlotForm({
             bucket="assets"
             folder="images"
             label="Bild"
-            hint="PNG, JPG, WebP eller SVG med transparens."
+            hint="PNG, JPG, WebP eller SVG."
             onUploaded={(publicUrl) => onUpdate({ storageUrl: publicUrl })}
           />
+
+          {/* Fit */}
           <div className="flex flex-col gap-1">
             <p className="text-xs font-medium text-slate-700">Bildplacering</p>
             <div className="flex rounded-lg border border-slate-200 overflow-hidden text-xs">
               {(['cover', 'contain'] as const).map((option) => (
-                <button
-                  key={option}
-                  onClick={() => onUpdate({ objectFit: option })}
-                  className={`flex-1 py-1.5 font-medium transition-colors
-                    ${fit === option ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
-                >
+                <button key={option} onClick={() => onUpdate({ objectFit: option })}
+                  className={`flex-1 py-1.5 font-medium transition-colors ${fit === option ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>
                   {option === 'cover' ? 'Fyll' : 'Passa in'}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Gradient overlay */}
+          {/* Overlay editor */}
           <div className="border-t border-slate-100 pt-3 flex flex-col gap-3">
-            <p className="text-xs font-semibold text-slate-600">Gradientöverlägg</p>
-            <Select
-              label="Färg"
-              value={overlayKey}
-              options={colorOptions}
-              onChange={(e) => onUpdate({ overlayColorTokenKey: e.target.value || undefined })}
-            />
-            {overlayKey && (
-              <>
-                <div>
-                  <label className="text-xs font-medium text-slate-700 block mb-1">
-                    Opacitet — {Math.round(overlayOpacity * 100)}%
-                  </label>
-                  <input
-                    type="range" min={0} max={1} step={0.05}
-                    value={overlayOpacity}
-                    onChange={(e) => onUpdate({ overlayOpacity: Number(e.target.value) })}
-                    className="w-full accent-blue-600"
-                  />
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-slate-700">Gradientöverlägg</p>
+              <button onClick={addStop}
+                className="text-xs text-blue-600 hover:text-blue-800 font-medium">+ Lägg till stopp</button>
+            </div>
+
+            {stops.length === 0 && (
+              <p className="text-xs text-slate-400 italic">Inget överlägg. Klicka "+ Lägg till stopp".</p>
+            )}
+
+            {/* Color stops */}
+            {stops.map((stop, i) => (
+              <div key={i} className="bg-slate-50 rounded-lg p-2.5 flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-slate-600">Stopp {i + 1}</span>
+                  <button onClick={() => removeStop(i)} className="text-xs text-red-400 hover:text-red-600">✕</button>
                 </div>
+                <select
+                  value={stop.colorTokenKey}
+                  onChange={(e) => updateStop(i, { colorTokenKey: e.target.value })}
+                  className="w-full text-xs border border-slate-200 rounded px-2 py-1"
+                >
+                  {colorOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  <option value="transparent">Transparent</option>
+                </select>
                 <div>
-                  <label className="text-xs font-medium text-slate-700 block mb-1">
-                    Vinkel — {overlayAngle}°
-                  </label>
-                  <input
-                    type="range" min={0} max={360} step={15}
-                    value={overlayAngle}
-                    onChange={(e) => onUpdate({ overlayAngle: Number(e.target.value) })}
-                    className="w-full accent-blue-600"
-                  />
-                  <div className="flex justify-between text-xs text-slate-400 mt-0.5">
-                    <span>↑ uppifrån</span>
-                    <span>→ vänster</span>
-                    <span>↓ nedifrån</span>
+                  <div className="flex justify-between text-xs text-slate-500 mb-0.5">
+                    <span>Opacitet</span><span>{Math.round(stop.opacity * 100)}%</span>
                   </div>
+                  <input type="range" min={0} max={1} step={0.05} value={stop.opacity}
+                    onChange={(e) => updateStop(i, { opacity: Number(e.target.value) })}
+                    className="w-full accent-blue-600" />
                 </div>
+                <div>
+                  <div className="flex justify-between text-xs text-slate-500 mb-0.5">
+                    <span>Position</span><span>{stop.position}%</span>
+                  </div>
+                  <input type="range" min={0} max={100} step={1} value={stop.position}
+                    onChange={(e) => updateStop(i, { position: Number(e.target.value) })}
+                    className="w-full accent-blue-600" />
+                </div>
+              </div>
+            ))}
+
+            {stops.length > 0 && (
+              <>
+                {/* Type */}
+                <div className="flex rounded-lg border border-slate-200 overflow-hidden text-xs">
+                  {(['linear', 'radial'] as const).map((t) => (
+                    <button key={t} onClick={() => updateOverlay({ type: t })}
+                      className={`flex-1 py-1.5 font-medium transition-colors ${(overlay?.type ?? 'linear') === t ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>
+                      {t === 'linear' ? 'Linjär' : 'Radial'}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Angle (only for linear) */}
+                {(overlay?.type ?? 'linear') === 'linear' && (
+                  <div>
+                    <div className="flex justify-between text-xs text-slate-500 mb-0.5">
+                      <span>Vinkel</span><span>{overlay?.angle ?? 180}°</span>
+                    </div>
+                    <input type="range" min={0} max={360} step={15} value={overlay?.angle ?? 180}
+                      onChange={(e) => updateOverlay({ angle: Number(e.target.value) })}
+                      className="w-full accent-blue-600" />
+                    <div className="grid grid-cols-4 gap-1 mt-1">
+                      {[{label:'↓',val:180},{label:'→',val:90},{label:'↗',val:45},{label:'↘',val:135}].map(({label,val}) => (
+                        <button key={val} onClick={() => updateOverlay({ angle: val })}
+                          className={`text-xs py-1 rounded border transition-colors ${(overlay?.angle ?? 180) === val ? 'bg-blue-600 text-white border-blue-600' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Blend mode */}
+                <Select
+                  label="Blandningsläge"
+                  value={overlay?.blendMode ?? 'normal'}
+                  options={[
+                    { value: 'normal', label: 'Normal' },
+                    { value: 'multiply', label: 'Multiplicera' },
+                    { value: 'screen', label: 'Screen' },
+                    { value: 'overlay', label: 'Overlay' },
+                    { value: 'soft-light', label: 'Soft light' },
+                    { value: 'color-burn', label: 'Color burn' },
+                  ]}
+                  onChange={(e) => updateOverlay({ blendMode: e.target.value as import('../../../types/content.types').ImageOverlay['blendMode'] })}
+                />
               </>
             )}
           </div>

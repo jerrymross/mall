@@ -2,7 +2,7 @@ import type { TemplateSlot } from '../../types/template.types'
 import type { SlotContent } from '../../types/content.types'
 import type { DesignSystem } from '../../types/designSystem.types'
 import type { GradientDefinition } from '../../types/gradient.types'
-import { resolveTypography, resolveColor, typographyToCSS } from '../../lib/tokenResolver'
+import { resolveTypography, resolveColor, typographyToCSS, buildOverlayCSS } from '../../lib/tokenResolver'
 import { buildGradientCSS } from '../../lib/gradientBuilder'
 
 interface Props {
@@ -241,14 +241,10 @@ export function SlotRenderer({ slot, content, designSystem, gradients, isSelecte
       const img = content?.type === 'image' ? content : null
       const url = img?.storageUrl ?? ''
       const fit = img?.objectFit ?? 'cover'
-      const overlayColor = img?.overlayColorTokenKey
-        ? resolveColor(designSystem, img.overlayColorTokenKey as Parameters<typeof resolveColor>[1])
+      const overlayCSS = img?.overlay?.stops?.length
+        ? buildOverlayCSS(img.overlay, designSystem)
         : null
-      const overlayOpacity = img?.overlayOpacity ?? 0.5
-      const overlayAngle = img?.overlayAngle ?? 180
-      const overlayCSS = overlayColor
-        ? `linear-gradient(${overlayAngle}deg, ${overlayColor}${Math.round(overlayOpacity * 255).toString(16).padStart(2, '0')} 0%, transparent 100%)`
-        : null
+      const blendMode = img?.overlay?.blendMode ?? 'normal'
       return (
         <div style={{ ...style, background: 'transparent', position: 'absolute' }} onClick={handleClick}>
           {url ? (
@@ -259,7 +255,7 @@ export function SlotRenderer({ slot, content, designSystem, gradients, isSelecte
                 style={{ width: '100%', height: '100%', objectFit: fit, display: 'block' }}
               />
               {overlayCSS && (
-                <div style={{ position: 'absolute', inset: 0, background: overlayCSS, pointerEvents: 'none' }} />
+                <div style={{ position: 'absolute', inset: 0, background: overlayCSS, mixBlendMode: blendMode as React.CSSProperties['mixBlendMode'], pointerEvents: 'none' }} />
               )}
             </>
           ) : (
