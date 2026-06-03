@@ -5,7 +5,7 @@ import { GRADIENT_PRESETS } from '../../config/gradientPresets'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { ImageUploader } from '../../components/ui/ImageUploader'
-import { ChevronLeft, Palette, Type, Layers, Image } from 'lucide-react'
+import { ChevronLeft, Palette, Type, Layers, Image, PenTool } from 'lucide-react'
 import type { DesignSystem, ColorToken, ColorTokenKey } from '../../types/designSystem.types'
 import type { GradientDefinition } from '../../types/gradient.types'
 import { buildGradientCSS } from '../../lib/gradientBuilder'
@@ -54,6 +54,10 @@ export function AdminPage() {
             <div className="w-px h-5 bg-slate-200" />
             <h1 className="font-bold text-slate-900">Designsystem – Admin</h1>
           </div>
+          <Button onClick={() => navigate('/admin/template-builder')} variant="secondary" size="sm">
+            <PenTool size={14} />
+            Skapa ny mall
+          </Button>
           <Button onClick={save} variant={saved ? 'secondary' : 'primary'} size="sm">
             {saved ? '✓ Sparad' : 'Spara ändringar'}
           </Button>
