@@ -158,6 +158,10 @@ function PDFSlot({
   const pos = slot.position
   const wPt = pos.width * MM_TO_PT
   const hPt = pos.height * MM_TO_PT
+  const bgColor = slot.constraints.bgColorTokenKey
+    ? resolveColor(designSystem, slot.constraints.bgColorTokenKey)
+    : undefined
+  const borderRadiusPt = slot.constraints.borderRadius ? slot.constraints.borderRadius * MM_TO_PT : undefined
   const base = {
     position: 'absolute' as const,
     left: pos.x * MM_TO_PT,
@@ -165,6 +169,8 @@ function PDFSlot({
     width: wPt,
     height: hPt,
     overflow: 'hidden' as const,
+    ...(bgColor ? { backgroundColor: bgColor } : {}),
+    ...(borderRadiusPt ? { borderRadius: borderRadiusPt } : {}),
   }
 
   const typToken = slot.constraints.typographyTokenKey

@@ -18,6 +18,11 @@ interface Props {
 
 export function SlotRenderer({ slot, content, designSystem, gradients, isSelected, onClick, onUpdateContent, mmToPx }: Props) {
   const pos = slot.position
+  const bgColor = slot.constraints.bgColorTokenKey
+    ? resolveColor(designSystem, slot.constraints.bgColorTokenKey)
+    : undefined
+  const borderRadiusPx = slot.constraints.borderRadius ? slot.constraints.borderRadius * mmToPx : undefined
+
   const style: React.CSSProperties = {
     position: 'absolute',
     left: pos.x * mmToPx,
@@ -30,6 +35,8 @@ export function SlotRenderer({ slot, content, designSystem, gradients, isSelecte
     outlineOffset: '-2px',
     transition: 'outline-color 0.15s',
     overflow: 'hidden',
+    ...(bgColor ? { backgroundColor: bgColor } : {}),
+    ...(borderRadiusPx ? { borderRadius: borderRadiusPx } : {}),
   }
 
   const typToken = slot.constraints.typographyTokenKey

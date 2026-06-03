@@ -3,11 +3,13 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useDesignSystemStore } from '../../store/useDesignSystemStore'
 import { saveTemplate, updateTemplate, fetchTemplateById } from '../../lib/templateService'
 import { BUILT_IN_TEMPLATES } from '../../config/templates'
+import { GRADIENT_PRESETS } from '../../config/gradientPresets'
 import { BuilderCanvas } from '../../components/builder/BuilderCanvas'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { Select } from '../../components/ui/Select'
 import type { TemplateSlot, SlotType, TemplateDefinition } from '../../types/template.types'
+import type { SlotContent } from '../../types/content.types'
 import type { ColorTokenKey } from '../../types/designSystem.types'
 import {
   ChevronLeft, Plus, Trash2, Copy, ChevronUp, ChevronDown, Save
@@ -110,6 +112,17 @@ export function TemplateBuilderPage() {
     if (!selected) return
     setSlots((prev) =>
       prev.map((s) => s.id === selectedId ? { ...s, constraints: { ...s.constraints, ...patch } } : s)
+    )
+  }
+
+  function updateDefaultContent(patch: Partial<SlotContent>) {
+    if (!selected) return
+    setSlots((prev) =>
+      prev.map((s) => {
+        if (s.id !== selectedId) return s
+        const existing = s.defaultContent ?? ({ type: s.type } as SlotContent)
+        return { ...s, defaultContent: { ...existing, ...patch } as SlotContent }
+      })
     )
   }
 
@@ -273,6 +286,7 @@ export function TemplateBuilderPage() {
               slots={slots}
               selectedSlotId={selectedId}
               designSystem={activeDesignSystem}
+              gradients={GRADIENT_PRESETS}
               onSelectSlot={(id) => setSelectedId(id || null)}
               onUpdateSlot={updateSlot}
             />
@@ -395,6 +409,85 @@ export function TemplateBuilderPage() {
                 />
                 Låst (ej redigerbart av användare)
               </label>
+
+              {/* Background color */}
+              <Select
+                label="Bakgrundsfärg"
+                value={selected.constraints.bgColorTokenKey ?? ''}
+                options={colorOptions}
+                onChange={(e) => updateConstraint({ bgColorTokenKey: (e.target.value as ColorTokenKey) || undefined })}
+              />
+
+              {/* Border radius */}
+              <div>
+                <label className="text-xs font-medium text-slate-700 block mb-1">
+                  Rundade hörn: {selected.constraints.borderRadius ?? 0} mm
+                </label>
+                <input
+                  type="range"
+                  min={0}
+                  max={20}
+                  step={0.5}
+                  value={selected.constraints.borderRadius ?? 0}
+                  onChange={(e) => updateConstraint({ borderRadius: Number(e.target.value) || undefined })}
+                  className="w-full"
+                />
+              </div>
+
+              {/* Static content editor for locked slots */}
+              {selected.locked && (
+                <div className="border border-slate-200 rounded-lg p-3 bg-slate-50">
+                  <p className="text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide">Statiskt innehåll</p>
+                  {(selected.type === 'heading' || selected.type === 'subheading' || selected.type === 'body-text' || selected.type === 'cta') && (
+                    <div>
+                      <label className="text-xs text-slate-500 block mb-1">
+                        {selected.type === 'cta' ? 'Knapptext' : 'Text'}
+                      </label>
+                      <textarea
+                        value={(selected.defaultContent as { text?: string; label?: string } | undefined)?.text
+                          ?? (selected.defaultContent as { label?: string } | undefined)?.label
+                          ?? ''}
+                        onChange={(e) => {
+                          if (selected.type === 'cta') updateDefaultContent({ type: 'cta', label: e.target.value } as Partial<SlotContent>)
+                          else updateDefaultContent({ type: selected.type as 'heading' | 'subheading' | 'body-text', text: e.target.value } as Partial<SlotContent>)
+                        }}
+                        rows={selected.type === 'body-text' ? 4 : 2}
+                        className="w-full border border-slate-200 rounded px-2 py-1 text-sm resize-none"
+                        placeholder="Skriv statisk text..."
+                      />
+                    </div>
+                  )}
+                  {selected.type === 'bullet-list' && (
+                    <div>
+                      <label className="text-xs text-slate-500 block mb-1">Punkter (en per rad)</label>
+                      <textarea
+                        value={((selected.defaultContent as { items?: string[] } | undefined)?.items ?? []).join('\n')}
+                        onChange={(e) => updateDefaultContent({ type: 'bullet-list', items: e.target.value.split('\n') } as Partial<SlotContent>)}
+                        rows={4}
+                        className="w-full border border-slate-200 rounded px-2 py-1 text-sm resize-none"
+                        placeholder="Punkt 1&#10;Punkt 2&#10;Punkt 3"
+                      />
+                    </div>
+                  )}
+                  {selected.type === 'contact' && (
+                    <div className="flex flex-col gap-1.5">
+                      {(['name','title','email','phone'] as const).map((field) => (
+                        <input
+                          key={field}
+                          type="text"
+                          placeholder={field}
+                          value={(selected.defaultContent as Record<string, string> | undefined)?.[field] ?? ''}
+                          onChange={(e) => updateDefaultContent({ type: 'contact', [field]: e.target.value } as Partial<SlotContent>)}
+                          className="w-full border border-slate-200 rounded px-2 py-1 text-sm"
+                        />
+                      ))}
+                    </div>
+                  )}
+                  {(selected.type === 'heading' || selected.type === 'subheading' || selected.type === 'body-text' || selected.type === 'bullet-list' || selected.type === 'cta' || selected.type === 'contact') ? null : (
+                    <p className="text-xs text-slate-400 italic">Statiskt innehåll stöds inte för denna elementtyp.</p>
+                  )}
+                </div>
+              )}
 
               {/* z-index display */}
               <p className="text-xs text-slate-400">Z-lager: {selected.zIndex}</p>

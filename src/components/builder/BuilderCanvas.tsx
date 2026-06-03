@@ -1,23 +1,12 @@
 import { useRef, useState, useCallback } from 'react'
 import type { TemplateSlot } from '../../types/template.types'
 import type { DesignSystem } from '../../types/designSystem.types'
-import { resolveTypography, typographyToCSS } from '../../lib/tokenResolver'
+import type { GradientDefinition } from '../../types/gradient.types'
+import { SlotRenderer } from '../editor/SlotRenderer'
 
 const A4_W_MM = 210
 const A4_H_MM = 297
 const MM_TO_PX = 3.7795
-
-const SLOT_TYPE_COLORS: Record<string, string> = {
-  heading: 'rgba(59,130,246,0.15)',
-  subheading: 'rgba(99,102,241,0.15)',
-  'body-text': 'rgba(16,185,129,0.15)',
-  'bullet-list': 'rgba(245,158,11,0.15)',
-  cta: 'rgba(239,68,68,0.15)',
-  contact: 'rgba(236,72,153,0.15)',
-  image: 'rgba(0,0,0,0.08)',
-  logo: 'rgba(234,179,8,0.15)',
-  'gradient-background': 'rgba(139,92,246,0.15)',
-}
 
 const HANDLES = ['n','ne','e','se','s','sw','w','nw'] as const
 type Handle = typeof HANDLES[number]
@@ -26,11 +15,12 @@ interface Props {
   slots: TemplateSlot[]
   selectedSlotId: string | null
   designSystem: DesignSystem
+  gradients: GradientDefinition[]
   onSelectSlot: (id: string) => void
   onUpdateSlot: (id: string, pos: Partial<TemplateSlot['position']>) => void
 }
 
-export function BuilderCanvas({ slots, selectedSlotId, designSystem, onSelectSlot, onUpdateSlot }: Props) {
+export function BuilderCanvas({ slots, selectedSlotId, designSystem, gradients, onSelectSlot, onUpdateSlot }: Props) {
   const [scale, setScale] = useState(1)
   const scaleRef = useRef(1)
 
@@ -127,7 +117,7 @@ export function BuilderCanvas({ slots, selectedSlotId, designSystem, onSelectSlo
         onClick={() => onSelectSlot('')}
       >
         {/* Grid */}
-        <svg style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.06 }} width={naturalW} height={naturalH}>
+        <svg style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.06, zIndex: 1000 }} width={naturalW} height={naturalH}>
           {Array.from({ length: Math.floor(A4_W_MM / 10) }, (_, i) => (
             <line key={`v${i}`} x1={(i+1)*10*MM_TO_PX} y1={0} x2={(i+1)*10*MM_TO_PX} y2={naturalH} stroke="#000" strokeWidth={1} />
           ))}
@@ -141,62 +131,74 @@ export function BuilderCanvas({ slots, selectedSlotId, designSystem, onSelectSlo
           .map((slot) => {
             const isSelected = selectedSlotId === slot.id
             const pos = slot.position
-            const typToken = slot.constraints.typographyTokenKey
-              ? resolveTypography(designSystem, slot.constraints.typographyTokenKey)
-              : undefined
-            const textStyle = typToken ? typographyToCSS(typToken, designSystem) : {}
 
             return (
-              <div
-                key={slot.id}
-                onMouseDown={(e) => onMouseDownSlot(e, slot)}
-                style={{
-                  position: 'absolute',
-                  left: pos.x * MM_TO_PX,
-                  top: pos.y * MM_TO_PX,
-                  width: pos.width * MM_TO_PX,
-                  height: pos.height * MM_TO_PX,
-                  background: SLOT_TYPE_COLORS[slot.type] ?? 'rgba(0,0,0,0.05)',
-                  border: isSelected ? '2px solid #3b82f6' : '1.5px dashed rgba(0,0,0,0.2)',
-                  cursor: 'move',
-                  zIndex: slot.zIndex,
-                  overflow: 'hidden',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxSizing: 'border-box',
-                }}
-              >
-                <span style={{
-                  ...textStyle,
-                  fontSize: Math.min((typToken?.sizeRem ?? 0.75) * 16, pos.height * MM_TO_PX * 0.5),
-                  opacity: 0.5,
-                  pointerEvents: 'none',
-                  userSelect: 'none',
-                  maxWidth: '90%',
-                  textAlign: 'center',
-                  overflow: 'hidden',
-                  whiteSpace: 'nowrap',
-                }}>
-                  {slot.label}
-                </span>
+              <div key={slot.id} style={{ position: 'absolute', left: 0, top: 0, width: '100%', height: '100%', zIndex: slot.zIndex, pointerEvents: 'none' }}>
+                {/* Live preview via SlotRenderer */}
+                <SlotRenderer
+                  slot={slot}
+                  content={slot.defaultContent}
+                  designSystem={designSystem}
+                  gradients={gradients}
+                  isSelected={false}
+                  onClick={() => {}}
+                  mmToPx={MM_TO_PX}
+                />
 
-                {isSelected && HANDLES.map((h) => (
-                  <div
-                    key={h}
-                    onMouseDown={(e) => onMouseDownHandle(e, slot, h)}
-                    style={{
+                {/* Transparent drag/resize overlay */}
+                <div
+                  onMouseDown={(e) => onMouseDownSlot(e, slot)}
+                  style={{
+                    position: 'absolute',
+                    left: pos.x * MM_TO_PX,
+                    top: pos.y * MM_TO_PX,
+                    width: pos.width * MM_TO_PX,
+                    height: pos.height * MM_TO_PX,
+                    cursor: 'move',
+                    pointerEvents: 'all',
+                    outline: isSelected ? '2px solid #3b82f6' : '1.5px dashed rgba(100,116,139,0.35)',
+                    outlineOffset: '-1px',
+                    zIndex: 50,
+                    borderRadius: slot.constraints.borderRadius ? slot.constraints.borderRadius * MM_TO_PX : undefined,
+                  }}
+                >
+                  {isSelected && HANDLES.map((h) => (
+                    <div
+                      key={h}
+                      onMouseDown={(e) => onMouseDownHandle(e, slot, h)}
+                      style={{
+                        position: 'absolute',
+                        width: 8,
+                        height: 8,
+                        background: '#3b82f6',
+                        border: '1.5px solid #fff',
+                        borderRadius: 2,
+                        zIndex: 100,
+                        pointerEvents: 'all',
+                        ...handlePositions[h],
+                      }}
+                    />
+                  ))}
+
+                  {/* Label tag on selection */}
+                  {isSelected && (
+                    <div style={{
                       position: 'absolute',
-                      width: 8,
-                      height: 8,
+                      top: -20,
+                      left: 0,
                       background: '#3b82f6',
-                      border: '1.5px solid #fff',
-                      borderRadius: 2,
-                      zIndex: 100,
-                      ...handlePositions[h],
-                    }}
-                  />
-                ))}
+                      color: '#fff',
+                      fontSize: 10,
+                      fontFamily: 'system-ui',
+                      padding: '1px 6px',
+                      borderRadius: '3px 3px 0 0',
+                      whiteSpace: 'nowrap',
+                      pointerEvents: 'none',
+                    }}>
+                      {slot.label}
+                    </div>
+                  )}
+                </div>
               </div>
             )
           })}

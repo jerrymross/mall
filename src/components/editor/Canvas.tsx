@@ -92,7 +92,7 @@ export function Canvas({
             <SlotRenderer
               key={slot.id}
               slot={slot}
-              content={contentMap[slot.id]}
+              content={slot.locked && slot.defaultContent ? slot.defaultContent : contentMap[slot.id]}
               designSystem={designSystem}
               gradients={gradients}
               isSelected={selectedSlotId === slot.id}

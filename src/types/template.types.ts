@@ -1,4 +1,5 @@
 import type { ColorTokenKey } from './designSystem.types'
+import type { SlotContent } from './content.types'
 
 export type SlotType =
   | 'heading'
@@ -25,12 +26,14 @@ export interface SlotPosition {
 export interface SlotConstraints {
   typographyTokenKey?: string
   colorTokenKey?: ColorTokenKey
+  bgColorTokenKey?: ColorTokenKey
   gradientId?: string
   logoVariant?: 'full-color' | 'white' | 'black'
   maxChars?: number
   maxBullets?: number
   imageAspectRatio?: number
   required?: boolean
+  borderRadius?: number
 }
 
 export interface TemplateSlot {
@@ -43,6 +46,7 @@ export interface TemplateSlot {
   zIndex: number
   visible: boolean
   locked?: boolean
+  defaultContent?: SlotContent
 }
 
 export interface TemplatePage {
