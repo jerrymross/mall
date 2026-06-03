@@ -198,6 +198,45 @@ function PDFSlot({
         <View style={[base, { backgroundColor: '#D1DCE8' }]} />
       )
 
+    case 'table': {
+      const t = content
+      const cols = t.colWidths.length
+      const borderCol = t.showBorders && t.borderColorTokenKey
+        ? resolveColor(designSystem, t.borderColorTokenKey)
+        : 'transparent'
+      const headerBg  = resolveColor(designSystem, t.headerBgColorTokenKey)
+      const evenBg    = resolveColor(designSystem, t.evenBgColorTokenKey)
+      const oddBg     = resolveColor(designSystem, t.oddBgColorTokenKey)
+      const textCol   = resolveColor(designSystem, t.textColorTokenKey)
+      const hTextCol  = resolveColor(designSystem, t.headerTextColorTokenKey)
+      const fs        = t.fontSize * 14
+
+      return (
+        <View style={base}>
+          {t.rows.map((row, ri) => {
+            const isHeader = t.headerRow && ri === 0
+            const bg = isHeader ? headerBg : ri % 2 === 0 ? evenBg : oddBg
+            const fc = isHeader ? hTextCol : textCol
+            return (
+              <View key={ri} style={{ flexDirection: 'row', backgroundColor: bg, borderBottom: `1px solid ${borderCol}` }}>
+                {Array.from({ length: cols }).map((_, ci) => {
+                  const cell = row[ci] ?? { text: '' }
+                  const w = t.colWidths[ci] ?? (100 / cols)
+                  return (
+                    <View key={ci} style={{ width: `${w}%`, borderRight: `1px solid ${borderCol}`, padding: '2pt 4pt' }}>
+                      <Text style={{ fontFamily: pdfFont('Inter', (isHeader || cell.bold) ? 700 : 400), fontSize: fs, color: fc, textAlign: cell.align ?? 'left' }}>
+                        {cell.text}
+                      </Text>
+                    </View>
+                  )
+                })}
+              </View>
+            )
+          })}
+        </View>
+      )
+    }
+
     default:
       return <View style={base} />
   }

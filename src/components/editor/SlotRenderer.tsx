@@ -277,6 +277,59 @@ export function SlotRenderer({ slot, content, designSystem, gradients, isSelecte
       )
     }
 
+    case 'table': {
+      const t = content?.type === 'table' ? content : null
+      if (!t || !t.rows.length) return placeholder(slot.label)
+      const headerBg  = resolveColor(designSystem, t.headerBgColorTokenKey)
+      const evenBg    = resolveColor(designSystem, t.evenBgColorTokenKey)
+      const oddBg     = resolveColor(designSystem, t.oddBgColorTokenKey)
+      const textCol   = resolveColor(designSystem, t.textColorTokenKey)
+      const hTextCol  = resolveColor(designSystem, t.headerTextColorTokenKey)
+      const borderCol = t.showBorders && t.borderColorTokenKey
+        ? resolveColor(designSystem, t.borderColorTokenKey)
+        : 'transparent'
+      const cols = t.colWidths.length
+
+      return (
+        <div style={{ ...style, overflow: 'hidden' }} onClick={handleClick}>
+          <table style={{ width: '100%', height: '100%', borderCollapse: 'collapse', tableLayout: 'fixed', fontSize: `${t.fontSize}rem` }}>
+            <colgroup>
+              {t.colWidths.map((w, i) => <col key={i} style={{ width: `${w}%` }} />)}
+            </colgroup>
+            <tbody>
+              {t.rows.map((row, ri) => {
+                const isHeader = t.headerRow && ri === 0
+                const bg = isHeader ? headerBg : ri % 2 === 0 ? evenBg : oddBg
+                const fc = isHeader ? hTextCol : textCol
+                return (
+                  <tr key={ri}>
+                    {Array.from({ length: cols }).map((_, ci) => {
+                      const cell = row[ci] ?? { text: '' }
+                      return (
+                        <td key={ci} style={{
+                          background: bg, color: fc,
+                          textAlign: cell.align ?? 'left',
+                          fontWeight: (isHeader || cell.bold) ? 700 : 400,
+                          padding: '3px 6px',
+                          border: `1px solid ${borderCol}`,
+                          userSelect: 'none',
+                          overflow: 'hidden',
+                          whiteSpace: 'nowrap',
+                          textOverflow: 'ellipsis',
+                        }}>
+                          {cell.text}
+                        </td>
+                      )
+                    })}
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )
+    }
+
     default:
       return <div style={style} />
   }

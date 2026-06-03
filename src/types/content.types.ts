@@ -55,6 +55,29 @@ export interface ImageContent {
   focalPoint?: { x: number; y: number }
 }
 
+export type CellAlign = 'left' | 'center' | 'right'
+
+export interface TableCell {
+  text: string
+  align?: CellAlign
+  bold?: boolean
+}
+
+export interface TableContent {
+  type: 'table'
+  rows: TableCell[][]
+  colWidths: number[]
+  headerRow: boolean
+  headerBgColorTokenKey: string
+  evenBgColorTokenKey: string
+  oddBgColorTokenKey: string
+  textColorTokenKey: string
+  headerTextColorTokenKey: string
+  fontSize: number
+  showBorders: boolean
+  borderColorTokenKey?: string
+}
+
 export interface GradientBackgroundContent {
   type: 'gradient-background'
   gradientId: string
@@ -75,5 +98,6 @@ export type SlotContent =
   | ImageContent
   | GradientBackgroundContent
   | LogoContent
+  | TableContent
 
 export type ContentMap = Record<string, SlotContent>

@@ -368,7 +368,207 @@ function SlotForm({
       )
     }
 
+    case 'table': {
+      const t: import('../../../types/content.types').TableContent =
+        content?.type === 'table'
+          ? content
+          : {
+              type: 'table',
+              rows: [[{ text: '' }, { text: '' }], [{ text: '' }, { text: '' }]],
+              colWidths: [50, 50],
+              headerRow: true,
+              headerBgColorTokenKey: designSystem.colors[0]?.key ?? '',
+              evenBgColorTokenKey: designSystem.colors[1]?.key ?? designSystem.colors[0]?.key ?? '',
+              oddBgColorTokenKey: designSystem.colors[2]?.key ?? designSystem.colors[0]?.key ?? '',
+              textColorTokenKey: designSystem.colors[0]?.key ?? '',
+              headerTextColorTokenKey: designSystem.colors[0]?.key ?? '',
+              fontSize: 0.75,
+              showBorders: true,
+              borderColorTokenKey: designSystem.colors[0]?.key,
+            }
+
+      const numRows = t.rows.length
+      const numCols = t.colWidths.length
+      const colorOpts = designSystem.colors.map((c) => ({ value: c.key, label: c.label }))
+
+      function setTable(patch: Partial<import('../../../types/content.types').TableContent>) {
+        setSlotContent(slot.id, { ...t, ...patch })
+      }
+
+      function setRows(n: number) {
+        if (n < 1 || n > 20) return
+        const next = Array.from({ length: n }, (_, ri) =>
+          Array.from({ length: numCols }, (_, ci) => t.rows[ri]?.[ci] ?? { text: '' })
+        )
+        setTable({ rows: next })
+      }
+
+      function setCols(n: number) {
+        if (n < 1 || n > 10) return
+        const newWidths = Array.from({ length: n }, (_, i) => t.colWidths[i] ?? Math.floor(100 / n))
+        const total = newWidths.reduce((a, b) => a + b, 0)
+        newWidths[n - 1] += 100 - total
+        const next = t.rows.map((row) =>
+          Array.from({ length: n }, (_, ci) => row[ci] ?? { text: '' })
+        )
+        setTable({ rows: next, colWidths: newWidths })
+      }
+
+      function setCell(ri: number, ci: number, patch: Partial<import('../../../types/content.types').TableCell>) {
+        const next = t.rows.map((row, r) =>
+          row.map((cell, c) => (r === ri && c === ci ? { ...cell, ...patch } : cell))
+        )
+        setTable({ rows: next })
+      }
+
+      function setColWidth(ci: number, val: number) {
+        const next = [...t.colWidths]
+        const delta = val - next[ci]
+        next[ci] = val
+        // distribute delta from last column
+        const last = numCols - 1
+        if (ci !== last) next[last] = Math.max(5, next[last] - delta)
+        else next[last - 1] = Math.max(5, next[last - 1] - delta)
+        setTable({ colWidths: next })
+      }
+
+      function setColAlign(ci: number, align: import('../../../types/content.types').CellAlign) {
+        const next = t.rows.map((row) =>
+          row.map((cell, c) => c === ci ? { ...cell, align } : cell)
+        )
+        setTable({ rows: next })
+      }
+
+      const colAlign = (ci: number): import('../../../types/content.types').CellAlign =>
+        t.rows[t.headerRow ? 1 : 0]?.[ci]?.align ?? 'left'
+
+      return (
+        <div className="flex flex-col gap-4">
+
+          {/* Structure */}
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-semibold text-slate-700">Struktur</p>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <p className="text-xs text-slate-500 mb-1">Rader</p>
+                <div className="flex items-center gap-1">
+                  <button onClick={() => setRows(numRows - 1)} className="w-6 h-6 rounded border border-slate-200 text-slate-600 hover:bg-slate-100 text-xs">−</button>
+                  <span className="text-xs font-mono w-5 text-center">{numRows}</span>
+                  <button onClick={() => setRows(numRows + 1)} className="w-6 h-6 rounded border border-slate-200 text-slate-600 hover:bg-slate-100 text-xs">+</button>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 mb-1">Kolumner</p>
+                <div className="flex items-center gap-1">
+                  <button onClick={() => setCols(numCols - 1)} className="w-6 h-6 rounded border border-slate-200 text-slate-600 hover:bg-slate-100 text-xs">−</button>
+                  <span className="text-xs font-mono w-5 text-center">{numCols}</span>
+                  <button onClick={() => setCols(numCols + 1)} className="w-6 h-6 rounded border border-slate-200 text-slate-600 hover:bg-slate-100 text-xs">+</button>
+                </div>
+              </div>
+            </div>
+
+            <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+              <input type="checkbox" checked={t.headerRow} onChange={(e) => setTable({ headerRow: e.target.checked })} />
+              Rubrikrad (första raden)
+            </label>
+          </div>
+
+          {/* Colors */}
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-semibold text-slate-700">Färger</p>
+            {t.headerRow && (
+              <ColorTokenRow label="Rubrikbakgrund" value={t.headerBgColorTokenKey} opts={colorOpts} onChange={(v) => setTable({ headerBgColorTokenKey: v })} />
+            )}
+            {t.headerRow && (
+              <ColorTokenRow label="Rubriktext" value={t.headerTextColorTokenKey} opts={colorOpts} onChange={(v) => setTable({ headerTextColorTokenKey: v })} />
+            )}
+            <ColorTokenRow label="Jämna rader" value={t.evenBgColorTokenKey} opts={colorOpts} onChange={(v) => setTable({ evenBgColorTokenKey: v })} />
+            <ColorTokenRow label="Udda rader" value={t.oddBgColorTokenKey} opts={colorOpts} onChange={(v) => setTable({ oddBgColorTokenKey: v })} />
+            <ColorTokenRow label="Textfärg" value={t.textColorTokenKey} opts={colorOpts} onChange={(v) => setTable({ textColorTokenKey: v })} />
+          </div>
+
+          {/* Borders */}
+          <div className="flex flex-col gap-2">
+            <label className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+              <input type="checkbox" checked={t.showBorders} onChange={(e) => setTable({ showBorders: e.target.checked })} />
+              Visa kanter
+            </label>
+            {t.showBorders && (
+              <ColorTokenRow label="Kantfärg" value={t.borderColorTokenKey ?? designSystem.colors[0]?.key ?? ''} opts={colorOpts} onChange={(v) => setTable({ borderColorTokenKey: v })} />
+            )}
+          </div>
+
+          {/* Font size */}
+          <div>
+            <div className="flex justify-between text-xs text-slate-500 mb-1">
+              <span>Textstorlek</span><span>{t.fontSize}rem</span>
+            </div>
+            <input type="range" min={0.5} max={1.5} step={0.05} value={t.fontSize}
+              onChange={(e) => setTable({ fontSize: Number(e.target.value) })}
+              className="w-full accent-blue-600" />
+          </div>
+
+          {/* Column widths & alignment */}
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-semibold text-slate-700">Kolumner</p>
+            {t.colWidths.map((w, ci) => (
+              <div key={ci} className="bg-slate-50 rounded-lg p-2.5 flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-slate-600">Kolumn {ci + 1}</span>
+                  <div className="flex gap-0.5">
+                    {(['left', 'center', 'right'] as const).map((a) => (
+                      <button key={a} onClick={() => setColAlign(ci, a)}
+                        className={`w-6 h-6 rounded text-xs transition-colors ${colAlign(ci) === a ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 text-slate-500'}`}>
+                        {a === 'left' ? '⬅' : a === 'center' ? '↔' : '➡'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-400">Bredd</span>
+                  <input type="range" min={5} max={90} step={1} value={w}
+                    onChange={(e) => setColWidth(ci, Number(e.target.value))}
+                    className="flex-1 accent-blue-600" />
+                  <span className="text-xs font-mono text-slate-500 w-8 text-right">{w}%</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Cell content grid */}
+          <div className="flex flex-col gap-1">
+            <p className="text-xs font-semibold text-slate-700">Cellinnehåll</p>
+            <div className="border border-slate-200 rounded-lg overflow-hidden">
+              {t.rows.map((row, ri) => (
+                <div key={ri} className={`flex border-b border-slate-100 last:border-b-0 ${t.headerRow && ri === 0 ? 'bg-slate-100' : ''}`}>
+                  {Array.from({ length: numCols }).map((_, ci) => (
+                    <input key={ci} value={row[ci]?.text ?? ''}
+                      onChange={(e) => setCell(ri, ci, { text: e.target.value })}
+                      placeholder={t.headerRow && ri === 0 ? `Kol ${ci + 1}` : `R${ri}K${ci}`}
+                      style={{ flex: 1, minWidth: 0, padding: '4px 6px', fontSize: 11, background: 'transparent', border: 'none', borderRight: ci < numCols - 1 ? '1px solid #e2e8f0' : 'none', outline: 'none' }}
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )
+    }
+
     default:
       return <p className="text-xs text-slate-400">Inga redigerbara fält för denna typ.</p>
   }
+}
+
+function ColorTokenRow({ label, value, opts, onChange }: { label: string; value: string; opts: { value: string; label: string }[]; onChange: (v: string) => void }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-xs text-slate-600 w-28 flex-shrink-0">{label}</span>
+      <select value={value} onChange={(e) => onChange(e.target.value)}
+        className="flex-1 text-xs border border-slate-200 rounded px-2 py-1">
+        {opts.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
+    </div>
+  )
 }
