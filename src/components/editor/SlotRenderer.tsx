@@ -12,10 +12,11 @@ interface Props {
   gradients: GradientDefinition[]
   isSelected: boolean
   onClick: () => void
+  onUpdateContent?: (text: string) => void
   mmToPx: number
 }
 
-export function SlotRenderer({ slot, content, designSystem, gradients, isSelected, onClick, mmToPx }: Props) {
+export function SlotRenderer({ slot, content, designSystem, gradients, isSelected, onClick, onUpdateContent, mmToPx }: Props) {
   const pos = slot.position
   const style: React.CSSProperties = {
     position: 'absolute',
@@ -99,6 +100,34 @@ export function SlotRenderer({ slot, content, designSystem, gradients, isSelecte
     case 'heading':
     case 'subheading': {
       const text = content?.type === 'heading' || content?.type === 'subheading' ? content.text : ''
+      if (isSelected && onUpdateContent) {
+        return (
+          <div style={{ ...style, display: 'flex', alignItems: 'center' }}>
+            <textarea
+              autoFocus
+              value={text}
+              maxLength={slot.constraints.maxChars}
+              onChange={(e) => onUpdateContent(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                ...textStyle,
+                width: '100%',
+                height: '100%',
+                background: 'transparent',
+                border: 'none',
+                outline: 'none',
+                resize: 'none',
+                padding: 0,
+                margin: 0,
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                cursor: 'text',
+                caretColor: textStyle.color as string ?? '#fff',
+              }}
+            />
+          </div>
+        )
+      }
       if (!text) return placeholder(slot.label)
       return (
         <div style={{ ...style, display: 'flex', alignItems: 'center' }} onClick={handleClick}>
@@ -111,6 +140,34 @@ export function SlotRenderer({ slot, content, designSystem, gradients, isSelecte
 
     case 'body-text': {
       const text = content?.type === 'body-text' ? content.text : ''
+      if (isSelected && onUpdateContent) {
+        return (
+          <div style={{ ...style, padding: '2px 0' }}>
+            <textarea
+              autoFocus
+              value={text}
+              maxLength={slot.constraints.maxChars}
+              onChange={(e) => onUpdateContent(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                ...textStyle,
+                width: '100%',
+                height: '100%',
+                background: 'transparent',
+                border: 'none',
+                outline: 'none',
+                resize: 'none',
+                padding: 0,
+                margin: 0,
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                cursor: 'text',
+                caretColor: textStyle.color as string ?? '#000',
+              }}
+            />
+          </div>
+        )
+      }
       if (!text) return placeholder(slot.label)
       return (
         <div style={{ ...style, padding: '2px 0', overflow: 'hidden' }} onClick={handleClick}>

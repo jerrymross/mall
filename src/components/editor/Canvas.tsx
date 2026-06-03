@@ -17,6 +17,7 @@ interface Props {
   gradients: GradientDefinition[]
   selectedSlotId: string | null
   onSelectSlot: (slotId: string) => void
+  onUpdateContent?: (slotId: string, text: string) => void
   pageIndex?: number
 }
 
@@ -27,6 +28,7 @@ export function Canvas({
   gradients,
   selectedSlotId,
   onSelectSlot,
+  onUpdateContent,
   pageIndex = 0,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -88,6 +90,7 @@ export function Canvas({
               gradients={gradients}
               isSelected={selectedSlotId === slot.id}
               onClick={() => onSelectSlot(slot.id)}
+              onUpdateContent={onUpdateContent ? (text) => onUpdateContent(slot.id, text) : undefined}
               mmToPx={MM_TO_PX}
             />
           ))}

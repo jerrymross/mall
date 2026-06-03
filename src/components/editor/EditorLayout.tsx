@@ -21,12 +21,23 @@ interface Props {
 
 export function EditorLayout({ template, designSystem, gradients, title }: Props) {
   const navigate = useNavigate()
-  const { contentMap, selectedSlotId, setSelectedSlot, undo, redo, undoStack, redoStack } = useEditorStore()
+  const { contentMap, selectedSlotId, setSelectedSlot, setSlotContent, undo, redo, undoStack, redoStack } = useEditorStore()
   const { exportDoc, isExporting } = usePDFExport()
   const [showAIContext, setShowAIContext] = useState(false)
 
   const page = template.pages[0]
   const selectedSlot = page?.slots.find((s) => s.id === selectedSlotId) ?? null
+
+  function handleInlineUpdate(slotId: string, text: string) {
+    const slot = page?.slots.find((s) => s.id === slotId)
+    if (!slot) return
+    const existing = contentMap[slotId]
+    if (slot.type === 'heading' || slot.type === 'subheading') {
+      setSlotContent(slotId, { ...(existing ?? {}), type: slot.type, text })
+    } else if (slot.type === 'body-text') {
+      setSlotContent(slotId, { ...(existing ?? {}), type: 'body-text', text })
+    }
+  }
 
   async function handleExport() {
     await exportDoc(template, contentMap, designSystem, gradients, title)
@@ -115,6 +126,7 @@ export function EditorLayout({ template, designSystem, gradients, title }: Props
               gradients={gradients}
               selectedSlotId={selectedSlotId}
               onSelectSlot={setSelectedSlot}
+              onUpdateContent={handleInlineUpdate}
             />
           </div>
         </main>
