@@ -75,6 +75,15 @@ export function InspectorPanel({ slot, designSystem, gradients }: Props) {
 
       <SlotForm slot={slot} content={content} designSystem={designSystem} gradients={gradients} onUpdate={update} />
 
+      {/* Style overrides for text slots */}
+      {['heading','subheading','body-text','bullet-list','cta','contact'].includes(slot.type) && (
+        <StyleOverridePanel
+          content={content}
+          designSystem={designSystem}
+          onUpdate={update}
+        />
+      )}
+
       {slot.constraints.maxChars && (
         <p className="text-xs text-slate-400">
           Max {slot.constraints.maxChars} tecken
@@ -629,6 +638,48 @@ function SlotForm({
     default:
       return <p className="text-xs text-slate-400">Inga redigerbara fält för denna typ.</p>
   }
+}
+
+function StyleOverridePanel({
+  content,
+  designSystem,
+  onUpdate,
+}: {
+  content: SlotContent | undefined
+  designSystem: DesignSystem
+  onUpdate: (partial: Partial<SlotContent>) => void
+}) {
+  const c = content as { colorTokenKey?: string; typographyTokenKey?: string } | undefined
+  const colorOptions = designSystem.colors.map((c) => ({ value: c.key, label: c.label }))
+  const typographyOptions = designSystem.typography.map((t) => ({ value: t.key, label: `${t.key} · ${t.fontFamily} ${t.sizeRem}rem` }))
+
+  return (
+    <div className="border-t border-slate-100 pt-3 flex flex-col gap-3">
+      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Utseende</p>
+      <div className="flex flex-col gap-1">
+        <label className="text-xs text-slate-600">Färg</label>
+        <select
+          value={c?.colorTokenKey ?? ''}
+          onChange={(e) => onUpdate({ colorTokenKey: e.target.value || undefined } as Partial<SlotContent>)}
+          className="w-full text-xs border border-slate-200 rounded px-2 py-1"
+        >
+          <option value="">— Från mall —</option>
+          {colorOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+      </div>
+      <div className="flex flex-col gap-1">
+        <label className="text-xs text-slate-600">Typsnitt</label>
+        <select
+          value={c?.typographyTokenKey ?? ''}
+          onChange={(e) => onUpdate({ typographyTokenKey: e.target.value || undefined } as Partial<SlotContent>)}
+          className="w-full text-xs border border-slate-200 rounded px-2 py-1"
+        >
+          <option value="">— Från mall —</option>
+          {typographyOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+      </div>
+    </div>
+  )
 }
 
 function ColorTokenRow({ label, value, opts, onChange }: { label: string; value: string; opts: { value: string; label: string }[]; onChange: (v: string) => void }) {

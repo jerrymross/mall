@@ -127,7 +127,13 @@ export function PDFDocument({ template, contentMap, designSystem, gradients }: P
 
             {page.slots
               .filter((slot) => slot.visible)
-              .sort((a, b) => a.zIndex - b.zIndex)
+              .sort((a, b) => {
+                const TEXT = new Set(['heading','subheading','body-text','bullet-list','cta','contact'])
+                const aT = TEXT.has(a.type) ? 1 : 0
+                const bT = TEXT.has(b.type) ? 1 : 0
+                if (aT !== bT) return aT - bT
+                return a.zIndex - b.zIndex
+              })
               .map((slot) => (
                 <PDFSlot
                   key={slot.id}
@@ -173,22 +179,28 @@ function PDFSlot({
     ...(borderRadiusPt ? { borderRadius: borderRadiusPt } : {}),
   }
 
-  const typToken = slot.constraints.typographyTokenKey
-    ? resolveTypography(designSystem, slot.constraints.typographyTokenKey)
-    : undefined
+  // Content-level style overrides
+  const contentTypKey = (content as { typographyTokenKey?: string } | undefined)?.typographyTokenKey
+  const contentColKey = (content as { colorTokenKey?: string } | undefined)?.colorTokenKey
+  const typKey = contentTypKey ?? slot.constraints.typographyTokenKey
+  const typToken = typKey ? resolveTypography(designSystem, typKey) : undefined
 
   const textStyle = typToken
     ? {
         fontFamily: pdfFont(typToken.fontFamily, typToken.fontWeight),
         fontSize: typToken.sizeRem * REM_TO_PT,
-        color: resolveColor(designSystem, typToken.colorTokenKey),
+        color: contentColKey ? resolveColor(designSystem, contentColKey) : resolveColor(designSystem, typToken.colorTokenKey),
         lineHeight: typToken.lineHeight,
         letterSpacing: typToken.letterSpacing
           ? parseFloat(String(typToken.letterSpacing)) || 0
           : 0,
         textTransform: (typToken.textTransform ?? 'none') as 'none' | 'uppercase' | 'lowercase' | 'capitalize',
       }
-    : { fontFamily: 'Helvetica', fontSize: 10, color: '#000000', lineHeight: 1.4 }
+    : {
+        fontFamily: 'Helvetica', fontSize: 10,
+        color: contentColKey ? resolveColor(designSystem, contentColKey) : '#000000',
+        lineHeight: 1.4,
+      }
 
   // Gradient-background slot
   if (slot.type === 'gradient-background') {
@@ -277,16 +289,46 @@ function PDFSlot({
         </View>
       )
 
-    case 'image':
+    case 'image': {
       if (!content.storageUrl) return <View style={[base, { backgroundColor: '#D1DCE8' }]} />
+      const overlay = content.overlay
+      const hasOverlay = overlay && overlay.stops.length >= 2
       return (
         <View style={base}>
           <PDFImage
             src={content.storageUrl}
-            style={{ width: '100%', height: '100%', objectFit: content.objectFit === 'contain' ? 'contain' : 'cover' }}
+            style={{ position: 'absolute', top: 0, left: 0, width: wPt, height: hPt, objectFit: content.objectFit === 'contain' ? 'contain' : 'cover' }}
           />
+          {hasOverlay && (() => {
+            const id = `ov${slot.id.replace(/\W/g, '')}`
+            const stops = overlay.stops.map((s, i) => {
+              const hex = resolveColor(designSystem, s.colorTokenKey)
+              const color = s.opacity < 1 ? hexToRgba(hex, s.opacity) : hex
+              return <Stop key={i} offset={`${s.position}%`} stopColor={color} stopOpacity={s.opacity} />
+            })
+            if (overlay.type === 'radial') {
+              return (
+                <Svg width={wPt} height={hPt} style={{ position: 'absolute', top: 0, left: 0 }}>
+                  <Defs>
+                    <PDFRadialGradient id={id} cx="50%" cy="50%" r="70%" fx="50%" fy="50%">{stops}</PDFRadialGradient>
+                  </Defs>
+                  <Rect x="0" y="0" width={wPt} height={hPt} fill={`url(#${id})`} />
+                </Svg>
+              )
+            }
+            const { x1, y1, x2, y2 } = angleToSVGCoords(overlay.angle ?? 180)
+            return (
+              <Svg width={wPt} height={hPt} style={{ position: 'absolute', top: 0, left: 0 }}>
+                <Defs>
+                  <PDFLinearGradient id={id} x1={x1} y1={y1} x2={x2} y2={y2}>{stops}</PDFLinearGradient>
+                </Defs>
+                <Rect x="0" y="0" width={wPt} height={hPt} fill={`url(#${id})`} />
+              </Svg>
+            )
+          })()}
         </View>
       )
+    }
 
     case 'divider': {
       const color = resolveColor(designSystem, content.colorTokenKey)

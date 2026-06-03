@@ -39,11 +39,17 @@ export function SlotRenderer({ slot, content, designSystem, gradients, isSelecte
     ...(borderRadiusPx ? { borderRadius: borderRadiusPx } : {}),
   }
 
-  const typToken = slot.constraints.typographyTokenKey
-    ? resolveTypography(designSystem, slot.constraints.typographyTokenKey)
-    : undefined
+  // Content-level overrides take priority over slot constraints
+  const contentTypKey = (content as { typographyTokenKey?: string } | undefined)?.typographyTokenKey
+  const contentColKey = (content as { colorTokenKey?: string } | undefined)?.colorTokenKey
 
-  const textStyle = typToken ? typographyToCSS(typToken, designSystem) : {}
+  const typKey = contentTypKey ?? slot.constraints.typographyTokenKey
+  const typToken = typKey ? resolveTypography(designSystem, typKey) : undefined
+
+  const baseTextStyle = typToken ? typographyToCSS(typToken, designSystem) : {}
+  const textStyle = contentColKey
+    ? { ...baseTextStyle, color: resolveColor(designSystem, contentColKey) }
+    : baseTextStyle
 
   const handleClick = (e: React.MouseEvent) => {
     if (!slot.locked && slot.type !== 'gradient-background') {

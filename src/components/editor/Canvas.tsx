@@ -87,7 +87,14 @@ export function Canvas({
       >
         {page.slots
           .filter((slot) => slot.visible)
-          .sort((a, b) => a.zIndex - b.zIndex)
+          .sort((a, b) => {
+            // Text slots always render above backgrounds/images
+            const TEXT_TYPES = new Set(['heading','subheading','body-text','bullet-list','cta','contact'])
+            const aText = TEXT_TYPES.has(a.type) ? 1 : 0
+            const bText = TEXT_TYPES.has(b.type) ? 1 : 0
+            if (aText !== bText) return aText - bText
+            return a.zIndex - b.zIndex
+          })
           .map((slot) => (
             <SlotRenderer
               key={slot.id}

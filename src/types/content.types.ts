@@ -1,27 +1,37 @@
 export interface HeadingContent {
   type: 'heading'
   text: string
+  colorTokenKey?: string
+  typographyTokenKey?: string
 }
 
 export interface SubheadingContent {
   type: 'subheading'
   text: string
+  colorTokenKey?: string
+  typographyTokenKey?: string
 }
 
 export interface BodyTextContent {
   type: 'body-text'
   text: string
+  colorTokenKey?: string
+  typographyTokenKey?: string
 }
 
 export interface BulletListContent {
   type: 'bullet-list'
   items: string[]
+  colorTokenKey?: string
+  typographyTokenKey?: string
 }
 
 export interface CTAContent {
   type: 'cta'
   label: string
   url?: string
+  colorTokenKey?: string
+  typographyTokenKey?: string
 }
 
 export interface ContactContent {
@@ -31,6 +41,8 @@ export interface ContactContent {
   email?: string
   phone?: string
   photoUrl?: string
+  colorTokenKey?: string
+  typographyTokenKey?: string
 }
 
 export interface OverlayStop {
@@ -41,7 +53,7 @@ export interface OverlayStop {
 
 export interface ImageOverlay {
   type: 'linear' | 'radial'
-  angle: number        // grader (linear), ignoreras för radial
+  angle: number
   stops: OverlayStop[]
   blendMode?: 'normal' | 'multiply' | 'screen' | 'overlay' | 'soft-light' | 'color-burn'
 }
