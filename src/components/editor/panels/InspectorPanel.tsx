@@ -374,17 +374,17 @@ function SlotForm({
           ? content
           : {
               type: 'table',
-              rows: [[{ text: '' }, { text: '' }], [{ text: '' }, { text: '' }]],
-              colWidths: [50, 50],
-              headerRow: true,
-              headerBgColorTokenKey: designSystem.colors[0]?.key ?? '',
-              evenBgColorTokenKey: designSystem.colors[1]?.key ?? designSystem.colors[0]?.key ?? '',
-              oddBgColorTokenKey: designSystem.colors[2]?.key ?? designSystem.colors[0]?.key ?? '',
-              textColorTokenKey: designSystem.colors[0]?.key ?? '',
-              headerTextColorTokenKey: designSystem.colors[0]?.key ?? '',
-              fontSize: 0.75,
-              showBorders: true,
-              borderColorTokenKey: designSystem.colors[0]?.key,
+              rows: Array.from({ length: 5 }, () => Array.from({ length: 2 }, () => ({ text: '' }))),
+              colWidths: [85, 15],
+              headerRow: false,
+              headerBgColorTokenKey: 'brand-primary',
+              evenBgColorTokenKey: 'neutral-100',
+              oddBgColorTokenKey: 'neutral-300',
+              textColorTokenKey: 'brand-primary',
+              headerTextColorTokenKey: 'neutral-100',
+              fontSize: 0.9,
+              showBorders: false,
+              borderColorTokenKey: 'neutral-300',
             }
 
       const numRows = t.rows.length
