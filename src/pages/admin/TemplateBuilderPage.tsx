@@ -1,7 +1,8 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useDesignSystemStore } from '../../store/useDesignSystemStore'
-import { saveTemplate } from '../../lib/templateService'
+import { saveTemplate, updateTemplate, fetchTemplateById } from '../../lib/templateService'
+import { BUILT_IN_TEMPLATES } from '../../config/templates'
 import { BuilderCanvas } from '../../components/builder/BuilderCanvas'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
@@ -49,14 +50,39 @@ function makeSlot(type: SlotType, index: number): TemplateSlot {
 
 export function TemplateBuilderPage() {
   const navigate = useNavigate()
+  const { templateId } = useParams<{ templateId?: string }>()
   const { activeDesignSystem } = useDesignSystemStore()
   const [slots, setSlots] = useState<TemplateSlot[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [name, setName] = useState('Min mall')
   const [category, setCategory] = useState('custom')
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [loading, setLoading] = useState(!!templateId)
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!templateId) return
+    const builtin = BUILT_IN_TEMPLATES.find((t) => t.id === templateId)
+    if (builtin) {
+      setName(builtin.name)
+      setCategory(builtin.category)
+      setSlots(builtin.pages[0]?.slots ?? [])
+      setEditingId(null) // built-ins save as new copy
+      setLoading(false)
+      return
+    }
+    fetchTemplateById(templateId).then((tmpl) => {
+      if (tmpl) {
+        setName(tmpl.name)
+        setCategory(tmpl.category)
+        setSlots(tmpl.pages[0]?.slots ?? [])
+        setEditingId(tmpl.id)
+      }
+      setLoading(false)
+    })
+  }, [templateId])
 
   const selected = slots.find((s) => s.id === selectedId) ?? null
 
@@ -106,21 +132,21 @@ export function TemplateBuilderPage() {
     if (slots.length === 0) { setSaveError('Lägg till minst ett element innan du sparar.'); return }
     setSaving(true)
     setSaveError(null)
-    const template: TemplateDefinition = {
-      id: `tmpl-custom-${Date.now()}`,
-      name,
-      description: '',
-      thumbnailUrl: '',
-      category,
-      designSystemId: activeDesignSystem.id,
-      isPublished: true,
-      createdBy: 'user',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      pages: [{ pageNumber: 1, orientation: 'portrait', slots }],
-    }
+    const pages: TemplateDefinition['pages'] = [{ pageNumber: 1, orientation: 'portrait', slots }]
     try {
-      await saveTemplate(template)
+      if (editingId) {
+        await updateTemplate({
+          id: editingId, name, description: '', thumbnailUrl: '', category,
+          designSystemId: activeDesignSystem.id, isPublished: true,
+          createdBy: 'user', createdAt: '', updatedAt: '', pages,
+        })
+      } else {
+        await saveTemplate({
+          id: `tmpl-custom-${Date.now()}`, name, description: '', thumbnailUrl: '', category,
+          designSystemId: activeDesignSystem.id, isPublished: true,
+          createdBy: 'user', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), pages,
+        })
+      }
       setSaved(true)
       setTimeout(() => navigate('/'), 800)
     } catch (err) {
@@ -139,6 +165,14 @@ export function TemplateBuilderPage() {
     { value: '', label: '— välj färg —' },
     ...activeDesignSystem.colors.map((c) => ({ value: c.key, label: `${c.label} (${c.hex})` })),
   ]
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col h-screen bg-slate-100">
@@ -173,7 +207,7 @@ export function TemplateBuilderPage() {
         <span className="text-xs text-slate-400">{slots.length} element</span>
         <Button onClick={handleSave} variant={saved ? 'secondary' : 'primary'} size="sm" loading={saving}>
           <Save size={14} />
-          {saved ? '✓ Sparad!' : 'Spara mall'}
+          {saved ? '✓ Sparad!' : editingId ? 'Spara ändringar' : 'Spara mall'}
         </Button>
       </header>
 

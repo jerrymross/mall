@@ -9,7 +9,7 @@ import { Modal } from '../components/ui/Modal'
 import { Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
 import { useEditorStore } from '../store/useEditorStore'
-import { Settings, FileText, Sparkles, Trash2, PenTool } from 'lucide-react'
+import { Settings, FileText, Sparkles, Trash2, PenTool, Pencil } from 'lucide-react'
 
 const categoryLabel: Record<string, string> = {
   course: 'Kurs',
@@ -109,7 +109,7 @@ export function HomePage() {
         <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">Inbyggda mallar</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
           {BUILT_IN_TEMPLATES.map((tmpl) => (
-            <TemplateCard key={tmpl.id} template={tmpl} onSelect={openCreateModal} />
+            <TemplateCard key={tmpl.id} template={tmpl} onSelect={openCreateModal} onEdit={(id) => navigate(`/admin/template-builder/${id}`)} />
           ))}
         </div>
 
@@ -128,7 +128,7 @@ export function HomePage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {customTemplates.map((tmpl) => (
-              <TemplateCard key={tmpl.id} template={tmpl} onSelect={openCreateModal} onDelete={handleDelete} />
+              <TemplateCard key={tmpl.id} template={tmpl} onSelect={openCreateModal} onDelete={handleDelete} onEdit={(id) => navigate(`/admin/template-builder/${id}`)} />
             ))}
           </div>
         )}
@@ -171,10 +171,12 @@ function TemplateCard({
   template,
   onSelect,
   onDelete,
+  onEdit,
 }: {
   template: TemplateDefinition
   onSelect: (id: string) => void
   onDelete?: (id: string) => void
+  onEdit?: (id: string) => void
 }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-lg hover:border-blue-200 transition-all group">
@@ -188,15 +190,26 @@ function TemplateCard({
           <div className="w-full h-2 bg-white/30 rounded mb-1" />
           <div className="w-4/5 h-2 bg-white/30 rounded" />
         </div>
-        {onDelete && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onDelete(template.id) }}
-            className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
-            title="Ta bort mall"
-          >
-            <Trash2 size={12} />
-          </button>
-        )}
+        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {onEdit && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onEdit(template.id) }}
+              className="p-1.5 bg-white text-slate-700 rounded-lg shadow"
+              title="Redigera mall"
+            >
+              <Pencil size={12} />
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(template.id) }}
+              className="p-1.5 bg-red-500 text-white rounded-lg"
+              title="Ta bort mall"
+            >
+              <Trash2 size={12} />
+            </button>
+          )}
+        </div>
       </div>
       <div className="p-5">
         <div className="flex items-start justify-between mb-1">

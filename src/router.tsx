@@ -23,4 +23,5 @@ export const router = createBrowserRouter([
   { path: '/editor/:templateId', element: withSuspense(<EditorPage />) },
   { path: '/admin', element: withSuspense(<AdminPage />) },
   { path: '/admin/template-builder', element: withSuspense(<TemplateBuilderPage />) },
+  { path: '/admin/template-builder/:templateId', element: withSuspense(<TemplateBuilderPage />) },
 ])

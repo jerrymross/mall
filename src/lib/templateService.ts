@@ -44,6 +44,16 @@ export async function fetchCustomTemplates(): Promise<TemplateDefinition[]> {
   return (data as SupabaseTemplate[]).map(fromSupabase)
 }
 
+export async function fetchTemplateById(id: string): Promise<TemplateDefinition | null> {
+  const { data, error } = await supabase
+    .from('templates')
+    .select('*')
+    .eq('id', id)
+    .single()
+  if (error) return null
+  return fromSupabase(data as SupabaseTemplate)
+}
+
 export async function saveTemplate(template: TemplateDefinition): Promise<string> {
   const payload = {
     name: template.name,
@@ -63,6 +73,20 @@ export async function saveTemplate(template: TemplateDefinition): Promise<string
 
   if (error) throw new Error(error.message)
   return (data as { id: string }).id
+}
+
+export async function updateTemplate(template: TemplateDefinition): Promise<void> {
+  const { error } = await supabase
+    .from('templates')
+    .update({
+      name: template.name,
+      description: template.description || null,
+      category: template.category,
+      pages: template.pages,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', template.id)
+  if (error) throw new Error(error.message)
 }
 
 export async function deleteTemplate(id: string): Promise<void> {
