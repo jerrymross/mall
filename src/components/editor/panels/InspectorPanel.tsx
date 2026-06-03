@@ -265,6 +265,61 @@ function SlotForm({
             </div>
           </div>
 
+          {/* Zoom & focal point */}
+          {url && fit === 'cover' && (
+            <div className="flex flex-col gap-3 border border-slate-100 rounded-lg p-3 bg-slate-50">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-slate-700">Zoom & fokuspunkt</p>
+                <button
+                  onClick={() => onUpdate({ zoom: 1, focalPoint: { x: 0.5, y: 0.5 } })}
+                  className="text-xs text-blue-600 hover:text-blue-800"
+                >
+                  Återställ
+                </button>
+              </div>
+
+              {/* Zoom slider */}
+              <div>
+                <div className="flex justify-between text-xs text-slate-500 mb-1">
+                  <span>Zoom</span><span>{Math.round((imgContent?.zoom ?? 1) * 100)}%</span>
+                </div>
+                <input type="range" min={1} max={8} step={0.05}
+                  value={imgContent?.zoom ?? 1}
+                  onChange={(e) => onUpdate({ zoom: Number(e.target.value) })}
+                  className="w-full accent-blue-600"
+                />
+              </div>
+
+              {/* Focal point picker */}
+              <div>
+                <p className="text-xs text-slate-500 mb-2">Fokuspunkt — klicka för att flytta</p>
+                <div
+                  style={{ position: 'relative', width: '100%', paddingTop: '56.25%', background: `url(${url}) center/cover`, borderRadius: 6, cursor: 'crosshair', border: '1px solid #e2e8f0', overflow: 'hidden' }}
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect()
+                    const x = (e.clientX - rect.left) / rect.width
+                    const y = (e.clientY - rect.top) / rect.height
+                    onUpdate({ focalPoint: { x: Math.max(0, Math.min(1, x)), y: Math.max(0, Math.min(1, y)) } })
+                  }}
+                >
+                  {/* crosshair */}
+                  <div style={{
+                    position: 'absolute',
+                    left: `${(imgContent?.focalPoint?.x ?? 0.5) * 100}%`,
+                    top: `${(imgContent?.focalPoint?.y ?? 0.5) * 100}%`,
+                    transform: 'translate(-50%, -50%)',
+                    width: 16, height: 16,
+                    border: '2px solid #fff',
+                    borderRadius: '50%',
+                    boxShadow: '0 0 0 1px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(0,0,0,0.5)',
+                    pointerEvents: 'none',
+                  }} />
+                </div>
+                <p className="text-xs text-slate-400 mt-1">Du kan också dra i bilden i canvas och scrolla för att zooma.</p>
+              </div>
+            </div>
+          )}
+
           {/* Overlay editor */}
           <div className="border-t border-slate-100 pt-3 flex flex-col gap-3">
             <div className="flex items-center justify-between">

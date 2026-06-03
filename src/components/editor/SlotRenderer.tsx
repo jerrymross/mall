@@ -258,17 +258,81 @@ export function SlotRenderer({ slot, content, designSystem, gradients, isSelecte
         ? buildOverlayCSS(img.overlay, designSystem)
         : null
       const blendMode = img?.overlay?.blendMode ?? 'normal'
+      const zoom = img?.zoom ?? 1
+      const fp = img?.focalPoint ?? { x: 0.5, y: 0.5 }
+      const fpPctX = fp.x * 100
+      const fpPctY = fp.y * 100
+
+      const handleImageMouseDown = (e: React.MouseEvent) => {
+        if (!isSelected || !onUpdateContent) return
+        e.stopPropagation()
+        const startX = e.clientX
+        const startY = e.clientY
+        const startFp = { ...fp }
+        const slotW = pos.width * mmToPx
+        const slotH = pos.height * mmToPx
+
+        const onMove = (ev: MouseEvent) => {
+          const dx = (ev.clientX - startX) / slotW / zoom
+          const dy = (ev.clientY - startY) / slotH / zoom
+          const nx = Math.max(0, Math.min(1, startFp.x - dx))
+          const ny = Math.max(0, Math.min(1, startFp.y - dy))
+          onUpdateContent(`fp:${nx.toFixed(4)},${ny.toFixed(4)},${zoom}`)
+        }
+        const onUp = () => {
+          window.removeEventListener('mousemove', onMove)
+          window.removeEventListener('mouseup', onUp)
+        }
+        window.addEventListener('mousemove', onMove)
+        window.addEventListener('mouseup', onUp)
+      }
+
+      const handleWheel = (e: React.WheelEvent) => {
+        if (!isSelected || !onUpdateContent) return
+        e.preventDefault()
+        e.stopPropagation()
+        const delta = e.deltaY > 0 ? -0.1 : 0.1
+        const newZoom = Math.max(1, Math.min(8, zoom + delta))
+        onUpdateContent(`fp:${fp.x.toFixed(4)},${fp.y.toFixed(4)},${newZoom.toFixed(2)}`)
+      }
+
       return (
-        <div style={{ ...style, background: 'transparent', position: 'absolute' }} onClick={handleClick}>
+        <div
+          style={{ ...style, background: 'transparent', position: 'absolute', cursor: isSelected && url ? 'grab' : undefined }}
+          onClick={handleClick}
+          onMouseDown={handleImageMouseDown}
+          onWheel={handleWheel}
+        >
           {url ? (
             <>
               <img
                 src={url}
                 alt={img?.altText ?? ''}
-                style={{ width: '100%', height: '100%', objectFit: fit, display: 'block' }}
+                draggable={false}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: fit,
+                  objectPosition: `${fpPctX}% ${fpPctY}%`,
+                  transform: zoom !== 1 ? `scale(${zoom})` : undefined,
+                  transformOrigin: `${fpPctX}% ${fpPctY}%`,
+                  display: 'block',
+                  userSelect: 'none',
+                  pointerEvents: 'none',
+                }}
               />
               {overlayCSS && (
                 <div style={{ position: 'absolute', inset: 0, background: overlayCSS, mixBlendMode: blendMode as React.CSSProperties['mixBlendMode'], pointerEvents: 'none' }} />
+              )}
+              {isSelected && url && (
+                <div style={{
+                  position: 'absolute', bottom: 4, right: 4,
+                  background: 'rgba(0,0,0,0.55)', color: '#fff',
+                  fontSize: 9, fontFamily: 'system-ui', padding: '2px 5px', borderRadius: 4,
+                  pointerEvents: 'none', userSelect: 'none',
+                }}>
+                  {Math.round(zoom * 100)}% · dra för att panorera · scroll för att zooma
+                </div>
               )}
             </>
           ) : (

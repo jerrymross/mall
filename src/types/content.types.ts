@@ -64,7 +64,8 @@ export interface ImageContent {
   altText?: string
   objectFit?: 'cover' | 'contain'
   overlay?: ImageOverlay
-  focalPoint?: { x: number; y: number }
+  focalPoint?: { x: number; y: number }  // 0–1 in each axis
+  zoom?: number                           // 1.0 = no zoom
 }
 
 export type CellAlign = 'left' | 'center' | 'right'

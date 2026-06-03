@@ -27,14 +27,23 @@ export function EditorLayout({ template, designSystem, gradients, title }: Props
   const page = template.pages[0]
   const selectedSlot = page?.slots.find((s) => s.id === selectedSlotId) ?? null
 
-  function handleInlineUpdate(slotId: string, text: string) {
+  function handleInlineUpdate(slotId: string, value: string) {
     const slot = page?.slots.find((s) => s.id === slotId)
     if (!slot) return
     const existing = contentMap[slotId]
+
+    // Image focal point + zoom protocol: "fp:x,y,zoom"
+    if (value.startsWith('fp:') && slot.type === 'image') {
+      const [x, y, z] = value.slice(3).split(',').map(Number)
+      const img = existing?.type === 'image' ? existing : { type: 'image' as const, storageUrl: '' }
+      setSlotContent(slotId, { ...img, focalPoint: { x, y }, zoom: z })
+      return
+    }
+
     if (slot.type === 'heading' || slot.type === 'subheading') {
-      setSlotContent(slotId, { ...(existing ?? {}), type: slot.type, text })
+      setSlotContent(slotId, { ...(existing ?? {}), type: slot.type, text: value })
     } else if (slot.type === 'body-text') {
-      setSlotContent(slotId, { ...(existing ?? {}), type: 'body-text', text })
+      setSlotContent(slotId, { ...(existing ?? {}), type: 'body-text', text: value })
     }
   }
 

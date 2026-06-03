@@ -293,11 +293,25 @@ function PDFSlot({
       if (!content.storageUrl) return <View style={[base, { backgroundColor: '#D1DCE8' }]} />
       const overlay = content.overlay
       const hasOverlay = overlay && overlay.stops.length >= 2
+      const imgZoom = content.zoom ?? 1
+      const fp = content.focalPoint ?? { x: 0.5, y: 0.5 }
+      // Simulate zoom by scaling image larger and offsetting by focal point
+      const scaledW = wPt * imgZoom
+      const scaledH = hPt * imgZoom
+      const imgLeft = -(scaledW - wPt) * fp.x
+      const imgTop = -(scaledH - hPt) * fp.y
       return (
         <View style={base}>
           <PDFImage
             src={content.storageUrl}
-            style={{ position: 'absolute', top: 0, left: 0, width: wPt, height: hPt, objectFit: content.objectFit === 'contain' ? 'contain' : 'cover' }}
+            style={{
+              position: 'absolute',
+              top: imgTop,
+              left: imgLeft,
+              width: scaledW,
+              height: scaledH,
+              objectFit: content.objectFit === 'contain' ? 'contain' : 'cover',
+            }}
           />
           {hasOverlay && (() => {
             const id = `ov${slot.id.replace(/\W/g, '')}`
