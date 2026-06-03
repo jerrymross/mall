@@ -17,7 +17,7 @@ interface Props {
   gradients: GradientDefinition[]
 }
 
-export function InspectorPanel({ slot, gradients }: Props) {
+export function InspectorPanel({ slot, designSystem, gradients }: Props) {
   const { contentMap, setSlotContent } = useEditorStore()
   const { generate, accept, reject, suggestions, generatingSlotIds } = useAIGenerate()
   const content = contentMap[slot.id]
@@ -73,7 +73,7 @@ export function InspectorPanel({ slot, gradients }: Props) {
         </div>
       )}
 
-      <SlotForm slot={slot} content={content} gradients={gradients} onUpdate={update} />
+      <SlotForm slot={slot} content={content} designSystem={designSystem} gradients={gradients} onUpdate={update} />
 
       {slot.constraints.maxChars && (
         <p className="text-xs text-slate-400">
@@ -87,11 +87,13 @@ export function InspectorPanel({ slot, gradients }: Props) {
 function SlotForm({
   slot,
   content,
+  designSystem,
   gradients,
   onUpdate,
 }: {
   slot: TemplateSlot
   content: SlotContent | undefined
+  designSystem: DesignSystem
   gradients: GradientDefinition[]
   onUpdate: (partial: Partial<SlotContent>) => void
 }) {
@@ -210,8 +212,15 @@ function SlotForm({
       const imgContent = content?.type === 'image' ? content : null
       const url = imgContent?.storageUrl ?? ''
       const fit = imgContent?.objectFit ?? 'cover'
+      const overlayKey = imgContent?.overlayColorTokenKey ?? ''
+      const overlayOpacity = imgContent?.overlayOpacity ?? 0.5
+      const overlayAngle = imgContent?.overlayAngle ?? 180
+      const colorOptions = [
+        { value: '', label: '— ingen overlay —' },
+        ...designSystem.colors.map((c) => ({ value: c.key, label: `${c.label} (${c.hex})` })),
+      ]
       return (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
           <ImageUploader
             value={url}
             bucket="assets"
@@ -230,13 +239,52 @@ function SlotForm({
                   className={`flex-1 py-1.5 font-medium transition-colors
                     ${fit === option ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
                 >
-                  {option === 'cover' ? 'Fyll (cover)' : 'Passa in (contain)'}
+                  {option === 'cover' ? 'Fyll' : 'Passa in'}
                 </button>
               ))}
             </div>
-            <p className="text-xs text-slate-400">
-              {fit === 'contain' ? 'Hela bilden visas — transparens bevaras.' : 'Bilden fyller ytan och beskärs.'}
-            </p>
+          </div>
+
+          {/* Gradient overlay */}
+          <div className="border-t border-slate-100 pt-3 flex flex-col gap-3">
+            <p className="text-xs font-semibold text-slate-600">Gradientöverlägg</p>
+            <Select
+              label="Färg"
+              value={overlayKey}
+              options={colorOptions}
+              onChange={(e) => onUpdate({ overlayColorTokenKey: e.target.value || undefined })}
+            />
+            {overlayKey && (
+              <>
+                <div>
+                  <label className="text-xs font-medium text-slate-700 block mb-1">
+                    Opacitet — {Math.round(overlayOpacity * 100)}%
+                  </label>
+                  <input
+                    type="range" min={0} max={1} step={0.05}
+                    value={overlayOpacity}
+                    onChange={(e) => onUpdate({ overlayOpacity: Number(e.target.value) })}
+                    className="w-full accent-blue-600"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-700 block mb-1">
+                    Vinkel — {overlayAngle}°
+                  </label>
+                  <input
+                    type="range" min={0} max={360} step={15}
+                    value={overlayAngle}
+                    onChange={(e) => onUpdate({ overlayAngle: Number(e.target.value) })}
+                    className="w-full accent-blue-600"
+                  />
+                  <div className="flex justify-between text-xs text-slate-400 mt-0.5">
+                    <span>↑ uppifrån</span>
+                    <span>→ vänster</span>
+                    <span>↓ nedifrån</span>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )

@@ -238,16 +238,30 @@ export function SlotRenderer({ slot, content, designSystem, gradients, isSelecte
     }
 
     case 'image': {
-      const url = content?.type === 'image' ? content.storageUrl : ''
-      const fit = content?.type === 'image' ? (content.objectFit ?? 'cover') : 'cover'
+      const img = content?.type === 'image' ? content : null
+      const url = img?.storageUrl ?? ''
+      const fit = img?.objectFit ?? 'cover'
+      const overlayColor = img?.overlayColorTokenKey
+        ? resolveColor(designSystem, img.overlayColorTokenKey as Parameters<typeof resolveColor>[1])
+        : null
+      const overlayOpacity = img?.overlayOpacity ?? 0.5
+      const overlayAngle = img?.overlayAngle ?? 180
+      const overlayCSS = overlayColor
+        ? `linear-gradient(${overlayAngle}deg, ${overlayColor}${Math.round(overlayOpacity * 255).toString(16).padStart(2, '0')} 0%, transparent 100%)`
+        : null
       return (
-        <div style={{ ...style, background: 'transparent' }} onClick={handleClick}>
+        <div style={{ ...style, background: 'transparent', position: 'absolute' }} onClick={handleClick}>
           {url ? (
-            <img
-              src={url}
-              alt={content?.type === 'image' ? content.altText ?? '' : ''}
-              style={{ width: '100%', height: '100%', objectFit: fit, display: 'block' }}
-            />
+            <>
+              <img
+                src={url}
+                alt={img?.altText ?? ''}
+                style={{ width: '100%', height: '100%', objectFit: fit, display: 'block' }}
+              />
+              {overlayCSS && (
+                <div style={{ position: 'absolute', inset: 0, background: overlayCSS, pointerEvents: 'none' }} />
+              )}
+            </>
           ) : (
             <div
               style={{

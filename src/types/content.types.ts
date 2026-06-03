@@ -38,6 +38,9 @@ export interface ImageContent {
   storageUrl: string
   altText?: string
   objectFit?: 'cover' | 'contain'
+  overlayColorTokenKey?: string
+  overlayOpacity?: number
+  overlayAngle?: number
   focalPoint?: { x: number; y: number }
 }
 
