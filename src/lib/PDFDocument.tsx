@@ -5,6 +5,7 @@ import {
   Text,
   Image as PDFImage,
   StyleSheet,
+  Font,
   Svg,
   Defs,
   LinearGradient as PDFLinearGradient,
@@ -18,11 +19,29 @@ import type { DesignSystem } from '../types/designSystem.types'
 import type { GradientDefinition } from '../types/gradient.types'
 import { resolveColor, resolveTypography } from './tokenResolver'
 
-function pdfFont(family: string, weight: number): string {
-  const isSerif = family === 'Lora'
-  const isBold = weight >= 600
-  if (isSerif) return isBold ? 'Times-Bold' : 'Times-Roman'
-  return isBold ? 'Helvetica-Bold' : 'Helvetica'
+Font.register({
+  family: 'Inter',
+  fonts: [
+    { src: '/fonts/inter-latin-400-normal.woff', fontWeight: 400 },
+    { src: '/fonts/inter-latin-500-normal.woff', fontWeight: 500 },
+    { src: '/fonts/inter-latin-600-normal.woff', fontWeight: 600 },
+    { src: '/fonts/inter-latin-700-normal.woff', fontWeight: 700 },
+    { src: '/fonts/inter-latin-800-normal.woff', fontWeight: 800 },
+  ],
+})
+
+Font.register({
+  family: 'Lora',
+  fonts: [
+    { src: '/fonts/lora-latin-400-normal.woff', fontWeight: 400 },
+    { src: '/fonts/lora-latin-600-normal.woff', fontWeight: 600 },
+    { src: '/fonts/lora-latin-700-normal.woff', fontWeight: 700 },
+  ],
+})
+
+function pdfFont(family: string): string {
+  if (family === 'Lora') return 'Lora'
+  return 'Inter'
 }
 
 // 1rem = 16px = 12pt (1px = 0.75pt)
@@ -142,7 +161,7 @@ export function PDFDocument({ template, contentMap, designSystem, gradients }: P
                 <PDFSlot
                   key={slot.id}
                   slot={slot}
-                  content={contentMap[slot.id]}
+                  content={slot.locked && slot.defaultContent ? slot.defaultContent : contentMap[slot.id]}
                   designSystem={designSystem}
                   gradients={gradients}
                 />
@@ -191,17 +210,24 @@ function PDFSlot({
 
   const textStyle = typToken
     ? {
-        fontFamily: pdfFont(typToken.fontFamily, typToken.fontWeight),
+        fontFamily: pdfFont(typToken.fontFamily),
+        fontWeight: typToken.fontWeight as 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900,
         fontSize: typToken.sizeRem * REM_TO_PT,
         color: contentColKey ? resolveColor(designSystem, contentColKey) : resolveColor(designSystem, typToken.colorTokenKey),
         lineHeight: typToken.lineHeight,
-        letterSpacing: typToken.letterSpacing
-          ? parseFloat(String(typToken.letterSpacing)) || 0
-          : 0,
+        letterSpacing: (() => {
+          if (!typToken.letterSpacing) return 0
+          const raw = String(typToken.letterSpacing)
+          const num = parseFloat(raw)
+          if (raw.endsWith('em')) return num * typToken.sizeRem * REM_TO_PT
+          if (raw.endsWith('px')) return num * 0.75
+          return num
+        })(),
         textTransform: (typToken.textTransform ?? 'none') as 'none' | 'uppercase' | 'lowercase' | 'capitalize',
       }
     : {
-        fontFamily: 'Helvetica', fontSize: 10,
+        fontFamily: 'Inter', fontSize: 10,
+        fontWeight: 400 as const,
         color: contentColKey ? resolveColor(designSystem, contentColKey) : '#000000',
         lineHeight: 1.4,
       }
@@ -286,7 +312,7 @@ function PDFSlot({
     case 'contact':
       return (
         <View style={base}>
-          {content.name  && <Text style={[textStyle, { fontFamily: pdfFont(typToken?.fontFamily ?? 'Inter', 700), marginBottom: 1 }]}>{content.name}</Text>}
+          {content.name  && <Text style={[textStyle, { fontFamily: pdfFont(typToken?.fontFamily ?? 'Inter'), fontWeight: 700, marginBottom: 1 }]}>{content.name}</Text>}
           {content.title && <Text style={[textStyle, { marginBottom: 1 }]}>{content.title}</Text>}
           {content.email && <Text style={[textStyle, { marginBottom: 1 }]}>{content.email}</Text>}
           {content.phone && <Text style={textStyle}>{content.phone}</Text>}
@@ -387,7 +413,8 @@ function PDFSlot({
                       padding: '2pt 4pt',
                     }}>
                       <Text style={{
-                        fontFamily: pdfFont('Inter', (isHeader || cell.bold) ? 700 : 400),
+                        fontFamily: 'Inter',
+                        fontWeight: (isHeader || cell.bold) ? 700 as const : 400 as const,
                         fontSize: fs,
                         color: fc,
                         textAlign: cell.align ?? 'left',
