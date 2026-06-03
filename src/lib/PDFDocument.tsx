@@ -292,14 +292,27 @@ function PDFSlot({
     case 'image': {
       if (!content.storageUrl) return <View style={[base, { backgroundColor: '#D1DCE8' }]} />
       const overlay = content.overlay
-      const hasOverlay = overlay && overlay.stops.length >= 2
+      const hasOverlay = overlay && overlay.stops.length >= 1
       const imgZoom = content.zoom ?? 1
       const fp = content.focalPoint ?? { x: 0.5, y: 0.5 }
-      // Simulate zoom by scaling image larger and offsetting by focal point
       const scaledW = wPt * imgZoom
       const scaledH = hPt * imgZoom
       const imgLeft = -(scaledW - wPt) * fp.x
       const imgTop = -(scaledH - hPt) * fp.y
+
+      const overlayGrad: import('../types/gradient.types').GradientDefinition | undefined = hasOverlay ? {
+        id: `ov_${slot.id}`,
+        name: 'overlay',
+        type: overlay.type,
+        angle: overlay.angle,
+        isPreset: false,
+        stops: overlay.stops.map((s) => ({
+          colorTokenKey: s.colorTokenKey as import('../types/designSystem.types').ColorTokenKey,
+          opacity: s.opacity,
+          position: s.position,
+        })),
+      } : undefined
+
       return (
         <View style={base}>
           <PDFImage
@@ -313,33 +326,9 @@ function PDFSlot({
               objectFit: content.objectFit === 'contain' ? 'contain' : 'cover',
             }}
           />
-          {hasOverlay && (() => {
-            const id = `ov${slot.id.replace(/\W/g, '')}`
-            const stops = overlay.stops.map((s, i) => {
-              const hex = resolveColor(designSystem, s.colorTokenKey)
-              const color = s.opacity < 1 ? hexToRgba(hex, s.opacity) : hex
-              return <Stop key={i} offset={`${s.position}%`} stopColor={color} stopOpacity={s.opacity} />
-            })
-            if (overlay.type === 'radial') {
-              return (
-                <Svg width={wPt} height={hPt} style={{ position: 'absolute', top: 0, left: 0 }}>
-                  <Defs>
-                    <PDFRadialGradient id={id} cx="50%" cy="50%" r="70%" fx="50%" fy="50%">{stops}</PDFRadialGradient>
-                  </Defs>
-                  <Rect x="0" y="0" width={wPt} height={hPt} fill={`url(#${id})`} />
-                </Svg>
-              )
-            }
-            const { x1, y1, x2, y2 } = angleToSVGCoords(overlay.angle ?? 180)
-            return (
-              <Svg width={wPt} height={hPt} style={{ position: 'absolute', top: 0, left: 0 }}>
-                <Defs>
-                  <PDFLinearGradient id={id} x1={x1} y1={y1} x2={x2} y2={y2}>{stops}</PDFLinearGradient>
-                </Defs>
-                <Rect x="0" y="0" width={wPt} height={hPt} fill={`url(#${id})`} />
-              </Svg>
-            )
-          })()}
+          {overlayGrad && (
+            <GradientSVG grad={overlayGrad} ds={designSystem} width={wPt} height={hPt} />
+          )}
         </View>
       )
     }

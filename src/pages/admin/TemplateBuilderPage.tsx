@@ -399,16 +399,101 @@ export function TemplateBuilderPage() {
                 Obligatoriskt fält
               </label>
 
-              {/* Locked */}
-              <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={selected.locked ?? false}
-                  onChange={(e) => updateSelected({ locked: e.target.checked })}
-                  className="rounded"
-                />
-                Låst (ej redigerbart av användare)
-              </label>
+              {/* Static / locked content */}
+              {['heading','subheading','body-text','bullet-list','cta','contact','logo'].includes(selected.type) && (
+                <div className="border border-blue-100 rounded-lg p-3 bg-blue-50">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-semibold text-blue-800 uppercase tracking-wide">Låst innehåll</p>
+                    <label className="flex items-center gap-1.5 text-xs text-blue-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selected.locked ?? false}
+                        onChange={(e) => updateSelected({ locked: e.target.checked })}
+                        className="rounded accent-blue-600"
+                      />
+                      Lås
+                    </label>
+                  </div>
+                  <p className="text-xs text-blue-600 mb-3">
+                    {selected.locked
+                      ? 'Innehållet nedan visas alltid och kan inte ändras av användaren.'
+                      : 'Ange text nedan och kryssa i "Lås" för att låsa innehållet.'}
+                  </p>
+
+                  {selected.type === 'logo' && (
+                    <p className="text-xs text-blue-700">
+                      Logotypen hämtas automatiskt från designsystemet.
+                      {selected.locked ? ' Den är nu låst.' : ' Kryssa i "Lås" för att förhindra att den tas bort.'}
+                    </p>
+                  )}
+
+                  {(selected.type === 'heading' || selected.type === 'subheading' || selected.type === 'body-text' || selected.type === 'cta') && (
+                    <div>
+                      <label className="text-xs text-blue-700 block mb-1">
+                        {selected.type === 'cta' ? 'Knapptext' : 'Text'}
+                      </label>
+                      <textarea
+                        value={(selected.defaultContent as { text?: string; label?: string } | undefined)?.text
+                          ?? (selected.defaultContent as { label?: string } | undefined)?.label
+                          ?? ''}
+                        onChange={(e) => {
+                          if (selected.type === 'cta') updateDefaultContent({ type: 'cta', label: e.target.value } as Partial<SlotContent>)
+                          else updateDefaultContent({ type: selected.type as 'heading' | 'subheading' | 'body-text', text: e.target.value } as Partial<SlotContent>)
+                          if (!selected.locked) updateSelected({ locked: true })
+                        }}
+                        rows={selected.type === 'body-text' ? 4 : 2}
+                        className="w-full border border-blue-200 rounded px-2 py-1 text-sm resize-none bg-white"
+                        placeholder="Skriv text som alltid ska visas..."
+                      />
+                    </div>
+                  )}
+                  {selected.type === 'bullet-list' && (
+                    <div>
+                      <label className="text-xs text-blue-700 block mb-1">Punkter (en per rad)</label>
+                      <textarea
+                        value={((selected.defaultContent as { items?: string[] } | undefined)?.items ?? []).join('\n')}
+                        onChange={(e) => {
+                          updateDefaultContent({ type: 'bullet-list', items: e.target.value.split('\n') } as Partial<SlotContent>)
+                          if (!selected.locked) updateSelected({ locked: true })
+                        }}
+                        rows={4}
+                        className="w-full border border-blue-200 rounded px-2 py-1 text-sm resize-none bg-white"
+                        placeholder="Punkt 1&#10;Punkt 2&#10;Punkt 3"
+                      />
+                    </div>
+                  )}
+                  {selected.type === 'contact' && (
+                    <div className="flex flex-col gap-1.5">
+                      {(['name','title','email','phone'] as const).map((field) => (
+                        <input
+                          key={field}
+                          type="text"
+                          placeholder={field === 'name' ? 'Namn' : field === 'title' ? 'Titel' : field === 'email' ? 'E-post' : 'Telefon'}
+                          value={(selected.defaultContent as Record<string, string> | undefined)?.[field] ?? ''}
+                          onChange={(e) => {
+                            updateDefaultContent({ type: 'contact', [field]: e.target.value } as Partial<SlotContent>)
+                            if (!selected.locked) updateSelected({ locked: true })
+                          }}
+                          className="w-full border border-blue-200 rounded px-2 py-1 text-sm bg-white"
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Locked for other types */}
+              {!['heading','subheading','body-text','bullet-list','cta','contact','logo'].includes(selected.type) && (
+                <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selected.locked ?? false}
+                    onChange={(e) => updateSelected({ locked: e.target.checked })}
+                    className="rounded"
+                  />
+                  Låst (ej redigerbart av användare)
+                </label>
+              )}
 
               {/* Background color */}
               <Select
@@ -433,61 +518,6 @@ export function TemplateBuilderPage() {
                   className="w-full"
                 />
               </div>
-
-              {/* Static content editor for locked slots */}
-              {selected.locked && (
-                <div className="border border-slate-200 rounded-lg p-3 bg-slate-50">
-                  <p className="text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide">Statiskt innehåll</p>
-                  {(selected.type === 'heading' || selected.type === 'subheading' || selected.type === 'body-text' || selected.type === 'cta') && (
-                    <div>
-                      <label className="text-xs text-slate-500 block mb-1">
-                        {selected.type === 'cta' ? 'Knapptext' : 'Text'}
-                      </label>
-                      <textarea
-                        value={(selected.defaultContent as { text?: string; label?: string } | undefined)?.text
-                          ?? (selected.defaultContent as { label?: string } | undefined)?.label
-                          ?? ''}
-                        onChange={(e) => {
-                          if (selected.type === 'cta') updateDefaultContent({ type: 'cta', label: e.target.value } as Partial<SlotContent>)
-                          else updateDefaultContent({ type: selected.type as 'heading' | 'subheading' | 'body-text', text: e.target.value } as Partial<SlotContent>)
-                        }}
-                        rows={selected.type === 'body-text' ? 4 : 2}
-                        className="w-full border border-slate-200 rounded px-2 py-1 text-sm resize-none"
-                        placeholder="Skriv statisk text..."
-                      />
-                    </div>
-                  )}
-                  {selected.type === 'bullet-list' && (
-                    <div>
-                      <label className="text-xs text-slate-500 block mb-1">Punkter (en per rad)</label>
-                      <textarea
-                        value={((selected.defaultContent as { items?: string[] } | undefined)?.items ?? []).join('\n')}
-                        onChange={(e) => updateDefaultContent({ type: 'bullet-list', items: e.target.value.split('\n') } as Partial<SlotContent>)}
-                        rows={4}
-                        className="w-full border border-slate-200 rounded px-2 py-1 text-sm resize-none"
-                        placeholder="Punkt 1&#10;Punkt 2&#10;Punkt 3"
-                      />
-                    </div>
-                  )}
-                  {selected.type === 'contact' && (
-                    <div className="flex flex-col gap-1.5">
-                      {(['name','title','email','phone'] as const).map((field) => (
-                        <input
-                          key={field}
-                          type="text"
-                          placeholder={field}
-                          value={(selected.defaultContent as Record<string, string> | undefined)?.[field] ?? ''}
-                          onChange={(e) => updateDefaultContent({ type: 'contact', [field]: e.target.value } as Partial<SlotContent>)}
-                          className="w-full border border-slate-200 rounded px-2 py-1 text-sm"
-                        />
-                      ))}
-                    </div>
-                  )}
-                  {(selected.type === 'heading' || selected.type === 'subheading' || selected.type === 'body-text' || selected.type === 'bullet-list' || selected.type === 'cta' || selected.type === 'contact') ? null : (
-                    <p className="text-xs text-slate-400 italic">Statiskt innehåll stöds inte för denna elementtyp.</p>
-                  )}
-                </div>
-              )}
 
               {/* z-index display */}
               <p className="text-xs text-slate-400">Z-lager: {selected.zIndex}</p>
