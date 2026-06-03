@@ -2,10 +2,9 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDesignSystemStore } from '../../store/useDesignSystemStore'
 import { GRADIENT_PRESETS } from '../../config/gradientPresets'
-import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { ImageUploader } from '../../components/ui/ImageUploader'
-import { ChevronLeft, Palette, Type, Layers, Image, PenTool } from 'lucide-react'
+import { ChevronLeft, Palette, Type, Layers, Image, PenTool, Check } from 'lucide-react'
 import type { DesignSystem, ColorToken, ColorTokenKey } from '../../types/designSystem.types'
 import type { GradientDefinition } from '../../types/gradient.types'
 import { buildGradientCSS } from '../../lib/gradientBuilder'
@@ -22,94 +21,94 @@ export function AdminPage() {
   function save() {
     setDesignSystem(ds)
     setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+    setTimeout(() => setSaved(false), 2200)
   }
 
   function updateColor(key: ColorTokenKey, hex: string) {
-    setDs((prev) => ({
-      ...prev,
-      colors: prev.colors.map((c) => (c.key === key ? { ...c, hex } : c)),
-    }))
+    setDs((prev) => ({ ...prev, colors: prev.colors.map((c) => (c.key === key ? { ...c, hex } : c)) }))
   }
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
-    { id: 'colors', label: 'Färger', icon: <Palette size={14} /> },
-    { id: 'typography', label: 'Typsnitt', icon: <Type size={14} /> },
-    { id: 'gradients', label: 'Gradienter', icon: <Layers size={14} /> },
-    { id: 'logo', label: 'Logotyp', icon: <Image size={14} /> },
+    { id: 'colors',     label: 'Färger',     icon: <Palette size={13} /> },
+    { id: 'typography', label: 'Typsnitt',   icon: <Type size={13} /> },
+    { id: 'gradients',  label: 'Gradienter', icon: <Layers size={13} /> },
+    { id: 'logo',       label: 'Logotyp',    icon: <Image size={13} /> },
   ]
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate('/')}
-              className="flex items-center gap-1 text-slate-500 hover:text-slate-800 text-sm"
-            >
-              <ChevronLeft size={16} />
-              Tillbaka
-            </button>
-            <div className="w-px h-5 bg-slate-200" />
-            <h1 className="font-bold text-slate-900">Designsystem – Admin</h1>
-          </div>
-          <Button onClick={() => navigate('/admin/template-builder')} variant="secondary" size="sm">
-            <PenTool size={14} />
-            Skapa ny mall
-          </Button>
-          <Button onClick={save} variant={saved ? 'secondary' : 'primary'} size="sm">
-            {saved ? '✓ Sparad' : 'Spara ändringar'}
-          </Button>
-        </div>
-      </header>
+    <div style={{ minHeight: '100vh', background: '#fafafa', fontFamily: "'Inter', system-ui, sans-serif" }}>
 
-      <main className="max-w-5xl mx-auto px-6 py-8">
-        {/* Tabs */}
-        <div className="flex gap-1 bg-white rounded-xl p-1 border border-slate-200 mb-8 w-fit">
+      {/* Nav */}
+      <nav style={{
+        position: 'sticky', top: 0, zIndex: 40,
+        height: 52, display: 'flex', alignItems: 'center',
+        padding: '0 32px', justifyContent: 'space-between',
+        background: 'rgba(250,250,250,0.85)', backdropFilter: 'blur(12px)',
+        borderBottom: '1px solid #e5e7eb',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <button onClick={() => navigate('/')}
+            style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280', fontSize: 13, fontWeight: 500, padding: 0 }}>
+            <ChevronLeft size={15} /> Tillbaka
+          </button>
+          <span style={{ width: 1, height: 16, background: '#e5e7eb' }} />
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#111827', letterSpacing: '-0.3px' }}>Designsystem</span>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => navigate('/admin/template-builder')}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, background: '#f8fafc', border: '1px solid #e5e7eb', color: '#374151', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>
+            <PenTool size={12} /> Skapa ny mall
+          </button>
+          <button onClick={save}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, background: saved ? '#f0fdf4' : '#111827', border: saved ? '1px solid #86efac' : '1px solid transparent', color: saved ? '#16a34a' : '#fff', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
+            {saved ? <><Check size={13} /> Sparad</> : 'Spara ändringar'}
+          </button>
+        </div>
+      </nav>
+
+      <main style={{ maxWidth: 860, margin: '0 auto', padding: '40px 32px 96px' }}>
+
+        {/* Tab bar */}
+        <div style={{ display: 'flex', gap: 2, marginBottom: 32, background: '#f1f5f9', borderRadius: 10, padding: 4, width: 'fit-content', border: '1px solid #e5e7eb' }}>
           {tabs.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
-                ${tab === t.id ? 'bg-blue-700 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
-            >
-              {t.icon}
-              {t.label}
+            <button key={t.id} onClick={() => setTab(t.id)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '7px 16px', borderRadius: 7, border: 'none', cursor: 'pointer',
+                fontSize: 12.5, fontWeight: 600, transition: 'all 0.15s',
+                background: tab === t.id ? '#fff' : 'transparent',
+                color: tab === t.id ? '#111827' : '#6b7280',
+                boxShadow: tab === t.id ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
+              }}>
+              {t.icon}{t.label}
             </button>
           ))}
         </div>
 
-        {tab === 'colors' && <ColorEditor ds={ds} onUpdateColor={updateColor} />}
+        {tab === 'colors'     && <ColorEditor ds={ds} onUpdateColor={updateColor} />}
         {tab === 'typography' && <TypographyViewer ds={ds} />}
-        {tab === 'gradients' && <GradientViewer gradients={GRADIENT_PRESETS} ds={ds} />}
-        {tab === 'logo' && (
-          <LogoEditor
-            ds={ds}
-            onUpdate={(variant, url) =>
-              setDs((p) => ({ ...p, logoAssets: { ...p.logoAssets, [variant]: url } }))
-            }
-          />
-        )}
+        {tab === 'gradients'  && <GradientViewer gradients={GRADIENT_PRESETS} ds={ds} />}
+        {tab === 'logo'       && <LogoEditor ds={ds} onUpdate={(v, url) => setDs((p) => ({ ...p, logoAssets: { ...p.logoAssets, [v]: url } }))} />}
       </main>
     </div>
   )
 }
 
-function ColorEditor({
-  ds,
-  onUpdateColor,
-}: {
-  ds: DesignSystem
-  onUpdateColor: (key: ColorTokenKey, hex: string) => void
-}) {
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+      <h2 style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', margin: 0, letterSpacing: '-0.2px' }}>{children}</h2>
+      <div style={{ flex: 1, height: 1, background: '#e5e7eb' }} />
+    </div>
+  )
+}
+
+function ColorEditor({ ds, onUpdateColor }: { ds: DesignSystem; onUpdateColor: (key: ColorTokenKey, hex: string) => void }) {
   return (
     <div>
-      <h2 className="text-lg font-semibold text-slate-800 mb-4">Färgpalett</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {ds.colors.map((color) => (
-          <ColorRow key={color.key} color={color} onChange={(hex) => onUpdateColor(color.key, hex)} />
-        ))}
+      <SectionHeading>Färgpalett</SectionHeading>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 10 }}>
+        {ds.colors.map((c) => <ColorRow key={c.key} color={c} onChange={(hex) => onUpdateColor(c.key, hex)} />)}
       </div>
     </div>
   )
@@ -117,31 +116,19 @@ function ColorEditor({
 
 function ColorRow({ color, onChange }: { color: ColorToken; onChange: (hex: string) => void }) {
   return (
-    <div className="bg-white rounded-xl p-4 border border-slate-200 flex items-center gap-4">
-      <div className="relative">
-        <div
-          className="w-12 h-12 rounded-lg border border-slate-200 cursor-pointer overflow-hidden"
-          style={{ backgroundColor: color.hex }}
-        >
-          <input
-            type="color"
-            value={color.hex}
-            onChange={(e) => onChange(e.target.value)}
-            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-          />
+    <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14 }}>
+      <div style={{ position: 'relative', flexShrink: 0 }}>
+        <div style={{ width: 44, height: 44, borderRadius: 10, background: color.hex, border: '1px solid rgba(0,0,0,0.08)', overflow: 'hidden', cursor: 'pointer' }}>
+          <input type="color" value={color.hex} onChange={(e) => onChange(e.target.value)}
+            style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} />
         </div>
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="font-medium text-slate-800 text-sm">{color.label}</p>
-        <p className="text-xs text-slate-500 font-mono">{color.hex}</p>
-        {color.usageNotes && <p className="text-xs text-slate-400 mt-0.5 truncate">{color.usageNotes}</p>}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontWeight: 600, color: '#0f172a', fontSize: 13, marginBottom: 2 }}>{color.label}</p>
+        {color.usageNotes && <p style={{ fontSize: 11, color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{color.usageNotes}</p>}
       </div>
-      <input
-        type="text"
-        value={color.hex}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-24 text-xs font-mono border border-slate-200 rounded px-2 py-1 text-slate-700"
-      />
+      <input type="text" value={color.hex} onChange={(e) => onChange(e.target.value)}
+        style={{ width: 90, fontSize: 11.5, fontFamily: 'monospace', border: '1px solid #e5e7eb', borderRadius: 6, padding: '5px 8px', color: '#374151', background: '#fafafa' }} />
     </div>
   )
 }
@@ -149,25 +136,15 @@ function ColorRow({ color, onChange }: { color: ColorToken; onChange: (hex: stri
 function TypographyViewer({ ds }: { ds: DesignSystem }) {
   return (
     <div>
-      <h2 className="text-lg font-semibold text-slate-800 mb-4">Typografitokens</h2>
-      <div className="flex flex-col gap-3">
+      <SectionHeading>Typografitokens</SectionHeading>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {ds.typography.map((t) => (
-          <div key={t.key} className="bg-white rounded-xl p-5 border border-slate-200">
-            <div className="flex items-start justify-between mb-3">
-              <span className="text-xs font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-600">{t.key}</span>
-              <span className="text-xs text-slate-400">{t.sizeRem}rem · {t.fontWeight}</span>
+          <div key={t.key} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '16px 18px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <code style={{ fontSize: 11, background: '#f1f5f9', padding: '2px 8px', borderRadius: 5, color: '#475569', fontFamily: 'monospace' }}>{t.key}</code>
+              <span style={{ fontSize: 11, color: '#94a3b8' }}>{t.sizeRem}rem · {t.fontWeight}</span>
             </div>
-            <p
-              style={{
-                fontFamily: t.fontFamily,
-                fontWeight: t.fontWeight,
-                fontSize: `${t.sizeRem}rem`,
-                lineHeight: t.lineHeight,
-                letterSpacing: t.letterSpacing,
-                textTransform: t.textTransform ?? 'none',
-                color: ds.colors.find((c) => c.key === t.colorTokenKey)?.hex ?? '#000',
-              }}
-            >
+            <p style={{ fontFamily: t.fontFamily, fontWeight: t.fontWeight, fontSize: `${t.sizeRem}rem`, lineHeight: t.lineHeight, letterSpacing: t.letterSpacing, textTransform: t.textTransform ?? 'none', color: ds.colors.find((c) => c.key === t.colorTokenKey)?.hex ?? '#000', margin: 0 }}>
               Det här är ett exempel
             </p>
           </div>
@@ -180,17 +157,14 @@ function TypographyViewer({ ds }: { ds: DesignSystem }) {
 function GradientViewer({ gradients, ds }: { gradients: GradientDefinition[]; ds: DesignSystem }) {
   return (
     <div>
-      <h2 className="text-lg font-semibold text-slate-800 mb-4">Gradientpresets</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+      <SectionHeading>Gradientpresets</SectionHeading>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10 }}>
         {gradients.map((g) => (
-          <div key={g.id} className="bg-white rounded-xl overflow-hidden border border-slate-200">
-            <div
-              className="h-24"
-              style={{ background: buildGradientCSS(g, ds) }}
-            />
-            <div className="p-3">
-              <p className="text-sm font-medium text-slate-700">{g.name}</p>
-              <p className="text-xs text-slate-400 capitalize">{g.type}</p>
+          <div key={g.id} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden' }}>
+            <div style={{ height: 80, background: buildGradientCSS(g, ds) }} />
+            <div style={{ padding: '10px 12px' }}>
+              <p style={{ fontSize: 12.5, fontWeight: 600, color: '#0f172a', marginBottom: 2 }}>{g.name}</p>
+              <p style={{ fontSize: 11, color: '#94a3b8', textTransform: 'capitalize' }}>{g.type}</p>
             </div>
           </div>
         ))}
@@ -200,57 +174,41 @@ function GradientViewer({ gradients, ds }: { gradients: GradientDefinition[]; ds
 }
 
 const LOGO_VARIANTS: { key: 'full-color' | 'white' | 'black'; label: string; bg: string }[] = [
-  { key: 'full-color', label: 'Färg', bg: 'bg-white' },
-  { key: 'white', label: 'Vit (på mörk bakgrund)', bg: 'bg-slate-800' },
-  { key: 'black', label: 'Svart (på ljus bakgrund)', bg: 'bg-slate-100' },
+  { key: 'full-color', label: 'Färg',                   bg: '#ffffff' },
+  { key: 'white',      label: 'Vit (på mörk bakgrund)', bg: '#1e293b' },
+  { key: 'black',      label: 'Svart (på ljus bakgrund)', bg: '#f1f5f9' },
 ]
 
-function LogoEditor({
-  ds,
-  onUpdate,
-}: {
-  ds: DesignSystem
-  onUpdate: (variant: 'full-color' | 'white' | 'black', url: string) => void
-}) {
+function LogoEditor({ ds, onUpdate }: { ds: DesignSystem; onUpdate: (variant: 'full-color' | 'white' | 'black', url: string) => void }) {
   return (
     <div>
-      <h2 className="text-lg font-semibold text-slate-800 mb-4">Logotypvarianter</h2>
-      <div className="flex flex-col gap-6">
+      <SectionHeading>Logotypvarianter</SectionHeading>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {LOGO_VARIANTS.map(({ key, label, bg }) => (
-          <div key={key} className="bg-white rounded-xl p-6 border border-slate-200 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-medium text-slate-800">{label}</h3>
-              <span className="text-xs font-mono bg-slate-100 px-2 py-0.5 rounded text-slate-500">{key}</span>
+          <div key={key} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '20px 20px 16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>{label}</span>
+              <code style={{ fontSize: 10.5, background: '#f1f5f9', padding: '2px 8px', borderRadius: 5, color: '#64748b', fontFamily: 'monospace' }}>{key}</code>
             </div>
             {ds.logoAssets[key] && (
-              <div className={`rounded-lg p-4 flex items-center justify-center h-24 ${bg}`}>
-                <img src={ds.logoAssets[key]} alt={label} className="max-h-full max-w-full object-contain" />
+              <div style={{ borderRadius: 8, padding: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', height: 80, background: bg, marginBottom: 14, border: '1px solid rgba(0,0,0,0.05)' }}>
+                <img src={ds.logoAssets[key]} alt={label} style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }} />
               </div>
             )}
-            <ImageUploader
-              value={ds.logoAssets[key] ?? ''}
-              bucket="assets"
-              folder="logos"
-              accept="image/png,image/svg+xml,image/jpeg,image/webp"
-              hint="PNG eller SVG rekommenderas."
-              onUploaded={(url) => onUpdate(key, url)}
-            />
-            <Input
-              label="Eller klistra in URL"
-              value={ds.logoAssets[key] ?? ''}
-              onChange={(e) => onUpdate(key, e.target.value)}
-              placeholder="https://..."
-            />
+            <ImageUploader value={ds.logoAssets[key] ?? ''} bucket="assets" folder="logos" accept="image/png,image/svg+xml,image/jpeg,image/webp" hint="PNG eller SVG rekommenderas." onUploaded={(url) => onUpdate(key, url)} />
+            <div style={{ marginTop: 10 }}>
+              <Input label="Eller klistra in URL" value={ds.logoAssets[key] ?? ''} onChange={(e) => onUpdate(key, e.target.value)} placeholder="https://..." />
+            </div>
           </div>
         ))}
-        <div className="grid grid-cols-2 gap-3 text-xs text-slate-600">
-          <div className="bg-white rounded-lg p-3 border border-slate-200">
-            <p className="font-medium mb-1">Minsta bredd</p>
-            <p>{ds.logoRules.minWidthPx}px</p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: '12px 14px' }}>
+            <p style={{ fontSize: 11, fontWeight: 600, color: '#374151', marginBottom: 4 }}>Minsta bredd</p>
+            <p style={{ fontSize: 13, color: '#0f172a', fontWeight: 600 }}>{ds.logoRules.minWidthPx}px</p>
           </div>
-          <div className="bg-white rounded-lg p-3 border border-slate-200">
-            <p className="font-medium mb-1">Frizon</p>
-            <p>{ds.logoRules.clearspaceMultiplier * 100}% av logohöjd</p>
+          <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: '12px 14px' }}>
+            <p style={{ fontSize: 11, fontWeight: 600, color: '#374151', marginBottom: 4 }}>Frizon</p>
+            <p style={{ fontSize: 13, color: '#0f172a', fontWeight: 600 }}>{ds.logoRules.clearspaceMultiplier * 100}% av logohöjd</p>
           </div>
         </div>
       </div>
