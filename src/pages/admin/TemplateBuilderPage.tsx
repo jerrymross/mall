@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDesignSystemStore } from '../../store/useDesignSystemStore'
-import { BUILT_IN_TEMPLATES } from '../../config/templates'
+import { saveTemplate } from '../../lib/templateService'
 import { BuilderCanvas } from '../../components/builder/BuilderCanvas'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
@@ -55,6 +55,8 @@ export function TemplateBuilderPage() {
   const [name, setName] = useState('Min mall')
   const [category, setCategory] = useState('custom')
   const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   const selected = slots.find((s) => s.id === selectedId) ?? null
 
@@ -100,7 +102,10 @@ export function TemplateBuilderPage() {
     )
   }
 
-  function saveTemplate() {
+  async function handleSave() {
+    if (slots.length === 0) { setSaveError('Lägg till minst ett element innan du sparar.'); return }
+    setSaving(true)
+    setSaveError(null)
     const template: TemplateDefinition = {
       id: `tmpl-custom-${Date.now()}`,
       name,
@@ -112,18 +117,17 @@ export function TemplateBuilderPage() {
       createdBy: 'user',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      pages: [{
-        pageNumber: 1,
-        orientation: 'portrait',
-        slots,
-      }],
+      pages: [{ pageNumber: 1, orientation: 'portrait', slots }],
     }
-    // Push to BUILT_IN_TEMPLATES in memory (persists until page reload)
-    BUILT_IN_TEMPLATES.push(template)
-    setSaved(true)
-    setTimeout(() => {
-      navigate('/')
-    }, 800)
+    try {
+      await saveTemplate(template)
+      setSaved(true)
+      setTimeout(() => navigate('/'), 800)
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Kunde inte spara')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const typographyOptions = [
@@ -167,7 +171,7 @@ export function TemplateBuilderPage() {
         </select>
         <div className="flex-1" />
         <span className="text-xs text-slate-400">{slots.length} element</span>
-        <Button onClick={saveTemplate} variant={saved ? 'secondary' : 'primary'} size="sm">
+        <Button onClick={handleSave} variant={saved ? 'secondary' : 'primary'} size="sm" loading={saving}>
           <Save size={14} />
           {saved ? '✓ Sparad!' : 'Spara mall'}
         </Button>
@@ -218,6 +222,9 @@ export function TemplateBuilderPage() {
         {/* Center – canvas */}
         <main className="flex-1 overflow-auto p-8 flex justify-center">
           <div className="w-full max-w-xl">
+            {saveError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">{saveError}</div>
+            )}
             {slots.length === 0 && (
               <div className="text-center text-slate-400 text-sm mb-6">
                 <Plus size={32} className="mx-auto mb-2 opacity-30" />
