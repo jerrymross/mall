@@ -56,11 +56,15 @@ interface GradientSVGProps {
 
 function GradientSVG({ grad, ds, width, height }: GradientSVGProps) {
   const id = `g${grad.id.replace(/\W/g, '')}`
-  const stops = grad.stops.map((s, i) => {
-    const hex = resolveColor(ds, s.colorTokenKey)
-    const color = s.opacity < 1 ? hexToRgba(hex, s.opacity) : hex
-    return <Stop key={i} offset={`${s.position}%`} stopColor={color} stopOpacity={s.opacity} />
-  })
+  const stops = [...grad.stops]
+    .sort((a, b) => a.position - b.position)
+    .map((s, i) => {
+      const resolved = resolveColor(ds, s.colorTokenKey)
+      // 'transparent' keyword not valid as SVG stopColor — use black with opacity 0
+      const stopColor = resolved === 'transparent' ? '#000000' : resolved
+      const stopOpacity = resolved === 'transparent' ? 0 : s.opacity
+      return <Stop key={i} offset={`${s.position}%`} stopColor={stopColor} stopOpacity={stopOpacity} />
+    })
 
   if (grad.type === 'radial') {
     return (

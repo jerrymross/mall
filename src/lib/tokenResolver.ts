@@ -3,6 +3,7 @@ import type { DesignSystem, ColorTokenKey, TypographyToken } from '../types/desi
 import type { ImageOverlay } from '../types/content.types'
 
 export function resolveColor(ds: DesignSystem, key: ColorTokenKey | string): string {
+  if (key === 'transparent') return 'transparent'
   const token = ds.colors.find((c) => c.key === key)
   return token?.hex ?? '#000000'
 }
@@ -28,9 +29,10 @@ export function buildOverlayCSS(overlay: ImageOverlay, ds: DesignSystem): string
     .slice()
     .sort((a, b) => a.position - b.position)
     .map((s) => {
-      const hex = resolveColor(ds, s.colorTokenKey)
+      const resolved = resolveColor(ds, s.colorTokenKey)
+      if (resolved === 'transparent') return `rgba(0,0,0,0) ${s.position}%`
       const alpha = Math.round(s.opacity * 255).toString(16).padStart(2, '0')
-      return `${hex}${alpha} ${s.position}%`
+      return `${resolved}${alpha} ${s.position}%`
     })
     .join(', ')
 
