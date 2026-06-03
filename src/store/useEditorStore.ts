@@ -101,3 +101,8 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
       redoStack: [],
     }),
 }))
+
+if (import.meta.env.DEV) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(window as any).__editorStore = useEditorStore
+}
