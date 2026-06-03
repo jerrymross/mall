@@ -24,6 +24,7 @@ const SLOT_TYPES: { type: SlotType; label: string; emoji: string }[] = [
   { type: 'logo', label: 'Logotyp', emoji: 'L' },
   { type: 'gradient-background', label: 'Bakgrund', emoji: '▓' },
   { type: 'table', label: 'Tabell', emoji: '⊞' },
+  { type: 'divider', label: 'Avdelare', emoji: '─' },
 ]
 
 function makeSlot(type: SlotType, index: number): TemplateSlot {
@@ -37,7 +38,8 @@ function makeSlot(type: SlotType, index: number): TemplateSlot {
     'image': { x: 10, y: 10 + index * 25, width: 90, height: 60 },
     'logo': { x: 10, y: 10, width: 45, height: 15 },
     'gradient-background': { x: 0, y: 0, width: 210, height: 50 },
-    'table': { x: 10, y: 10 + index * 25, width: 190, height: 60 },
+    'table':   { x: 10, y: 10 + index * 25, width: 190, height: 60 },
+    'divider': { x: 10, y: 10 + index * 25, width: 190, height: 5 },
   }
   return {
     id: `slot-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,

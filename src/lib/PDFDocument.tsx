@@ -282,6 +282,22 @@ function PDFSlot({
         </View>
       )
 
+    case 'divider': {
+      const color = resolveColor(designSystem, content.colorTokenKey)
+      const thickness = content.thickness * 0.75  // px → pt
+      const widthPct = content.widthPct
+      const marginLeft = content.align === 'center'
+        ? ((100 - widthPct) / 2 / 100) * wPt
+        : content.align === 'right'
+          ? ((100 - widthPct) / 100) * wPt
+          : 0
+      return (
+        <View style={[base, { justifyContent: 'center' }]}>
+          <View style={{ width: `${widthPct}%`, height: thickness, backgroundColor: color, marginLeft, borderRadius: thickness }} />
+        </View>
+      )
+    }
+
     case 'table': {
       const t = content
       const cols = t.colWidths.length

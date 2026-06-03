@@ -277,6 +277,20 @@ export function SlotRenderer({ slot, content, designSystem, gradients, isSelecte
       )
     }
 
+    case 'divider': {
+      const d = content?.type === 'divider' ? content : null
+      const color = d ? resolveColor(designSystem, d.colorTokenKey) : '#D1DCE8'
+      const thickness = d?.thickness ?? 1
+      const widthPct = d?.widthPct ?? 100
+      const align = d?.align ?? 'center'
+      const marginLeft = align === 'center' ? `${(100 - widthPct) / 2}%` : align === 'right' ? `${100 - widthPct}%` : '0'
+      return (
+        <div style={{ ...style, display: 'flex', alignItems: 'center' }} onClick={handleClick}>
+          <div style={{ width: `${widthPct}%`, marginLeft, height: thickness, background: color, borderRadius: thickness }} />
+        </div>
+      )
+    }
+
     case 'table': {
       const t = content?.type === 'table' ? content : null
       if (!t || !t.rows.length) return placeholder(slot.label)

@@ -11,6 +11,7 @@ export type SlotType =
   | 'gradient-background'
   | 'logo'
   | 'table'
+  | 'divider'
 
 export type PageOrientation = 'portrait' | 'landscape'
 

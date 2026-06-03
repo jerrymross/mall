@@ -78,6 +78,14 @@ export interface TableContent {
   borderColorTokenKey?: string
 }
 
+export interface DividerContent {
+  type: 'divider'
+  colorTokenKey: string
+  thickness: number   // px
+  widthPct: number    // 10–100
+  align: 'left' | 'center' | 'right'
+}
+
 export interface GradientBackgroundContent {
   type: 'gradient-background'
   gradientId: string
@@ -99,5 +107,6 @@ export type SlotContent =
   | GradientBackgroundContent
   | LogoContent
   | TableContent
+  | DividerContent
 
 export type ContentMap = Record<string, SlotContent>

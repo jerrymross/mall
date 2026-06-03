@@ -368,6 +368,76 @@ function SlotForm({
       )
     }
 
+    case 'divider': {
+      const d = content?.type === 'divider'
+        ? content
+        : { type: 'divider' as const, colorTokenKey: 'neutral-300', thickness: 1, widthPct: 100, align: 'center' as const }
+
+      function setD(patch: Partial<import('../../../types/content.types').DividerContent>) {
+        setSlotContent(slot.id, { ...d, ...patch })
+      }
+
+      const colorOpts = designSystem.colors.map((c) => ({ value: c.key, label: c.label }))
+      const lineColor = designSystem.colors.find((c) => c.key === d.colorTokenKey)?.hex ?? '#D1DCE8'
+
+      return (
+        <div className="flex flex-col gap-4">
+          {/* Live preview */}
+          <div className="rounded-lg bg-slate-50 border border-slate-100 p-4 flex items-center justify-center" style={{ height: 40 }}>
+            <div style={{
+              width: `${d.widthPct}%`,
+              height: d.thickness,
+              background: lineColor,
+              borderRadius: d.thickness,
+              marginLeft: d.align === 'center' ? `${(100 - d.widthPct) / 2}%` : d.align === 'right' ? `${100 - d.widthPct}%` : 0,
+            }} />
+          </div>
+
+          {/* Color */}
+          <div className="flex flex-col gap-1">
+            <p className="text-xs font-medium text-slate-700">Färg</p>
+            <select value={d.colorTokenKey} onChange={(e) => setD({ colorTokenKey: e.target.value })}
+              className="w-full text-xs border border-slate-200 rounded px-2 py-1">
+              {colorOpts.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+
+          {/* Thickness */}
+          <div>
+            <div className="flex justify-between text-xs text-slate-500 mb-1">
+              <span>Tjocklek</span><span>{d.thickness}px</span>
+            </div>
+            <input type="range" min={1} max={12} step={1} value={d.thickness}
+              onChange={(e) => setD({ thickness: Number(e.target.value) })}
+              className="w-full accent-blue-600" />
+          </div>
+
+          {/* Width */}
+          <div>
+            <div className="flex justify-between text-xs text-slate-500 mb-1">
+              <span>Bredd</span><span>{d.widthPct}%</span>
+            </div>
+            <input type="range" min={10} max={100} step={5} value={d.widthPct}
+              onChange={(e) => setD({ widthPct: Number(e.target.value) })}
+              className="w-full accent-blue-600" />
+          </div>
+
+          {/* Alignment */}
+          <div className="flex flex-col gap-1">
+            <p className="text-xs font-medium text-slate-700">Justering</p>
+            <div className="flex rounded-lg border border-slate-200 overflow-hidden text-xs">
+              {(['left', 'center', 'right'] as const).map((a) => (
+                <button key={a} onClick={() => setD({ align: a })}
+                  className={`flex-1 py-1.5 font-medium transition-colors ${d.align === a ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50'}`}>
+                  {a === 'left' ? 'Vänster' : a === 'center' ? 'Mitten' : 'Höger'}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )
+    }
+
     case 'table': {
       const t: import('../../../types/content.types').TableContent =
         content?.type === 'table'
