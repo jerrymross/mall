@@ -67,6 +67,13 @@ export function Canvas({
   return (
     <div ref={containerRef} className="w-full">
       <div
+        onClick={(e) => {
+          // Stop all clicks from reaching the <main> deselect handler.
+          // If the click landed directly on the canvas background (not a slot),
+          // deselect — slots stop propagation themselves via handleClick.
+          e.stopPropagation()
+          if (e.target === e.currentTarget) onSelectSlot('')
+        }}
         style={{
           width: naturalW,
           height: naturalH,

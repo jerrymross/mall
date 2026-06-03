@@ -133,7 +133,6 @@ export function EditorLayout({ template, designSystem, gradients, title }: Props
         {/* Center — canvas */}
         <main
           style={{ flex: 1, overflow: 'auto', padding: 32, display: 'flex', justifyContent: 'center', background: '#f1f5f9' }}
-          onClick={() => setSelectedSlot(null)}
         >
           <div style={{ width: '100%', maxWidth: 680 }}>
             <Canvas
@@ -142,7 +141,7 @@ export function EditorLayout({ template, designSystem, gradients, title }: Props
               designSystem={designSystem}
               gradients={gradients}
               selectedSlotId={selectedSlotId}
-              onSelectSlot={setSelectedSlot}
+              onSelectSlot={(id) => setSelectedSlot(id || null)}
               onUpdateContent={handleInlineUpdate}
             />
           </div>
