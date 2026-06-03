@@ -27,13 +27,13 @@ function isSlotFilled(slot: TemplateSlot, contentMap: ContentMap): boolean {
   switch (c.type) {
     case 'heading':
     case 'subheading':
-      return c.text.trim().length > 0
+      return (c.text ?? '').trim().length > 0
     case 'body-text':
-      return c.text.trim().length > 0
+      return (c.text ?? '').trim().length > 0
     case 'bullet-list':
-      return c.items.some((i) => i.trim().length > 0)
+      return c.items.some((i) => (i ?? '').trim().length > 0)
     case 'cta':
-      return c.label.trim().length > 0
+      return (c.label ?? '').trim().length > 0
     case 'contact':
       return !!(c.name || c.email)
     case 'image':
